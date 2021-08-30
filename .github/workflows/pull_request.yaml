@@ -20,4 +20,6 @@ jobs:
           format: "${major}.${minor}.${patch}-prerelease${increment}"
 
       - name: Check
-        run: echo "${{ steps.vars.outputs.version }}"
+        env:
+          STEPS_CONTEXT: ${{ toJSON(steps) }}
+        run: echo "$STEPS_CONTEXT"
