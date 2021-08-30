@@ -12,6 +12,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Generate Version
+        id: generate_version
         uses: paulhatch/semantic-version@v4.0.2
         with:
           tag_prefix: "v"
@@ -21,5 +22,5 @@ jobs:
 
       - name: Check
         env:
-          STEPS_CONTEXT: ${{ toJSON(steps) }}
+          STEPS_CONTEXT: ${{ toJSON(steps.generate_version.outputs) }}
         run: echo "$STEPS_CONTEXT"
