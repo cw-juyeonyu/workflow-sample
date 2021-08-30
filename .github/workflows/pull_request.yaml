@@ -20,4 +20,4 @@ jobs:
           format: "${major}.${minor}.${patch}-prerelease${increment}"
 
       - name: Check
-        run: echo ${{ steps.vars.outputs.version }}
+        run: echo "${{ steps.vars.outputs.version }}"
