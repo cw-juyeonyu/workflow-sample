@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Generate Version
-        id: build_version
+        id: generate_version
         uses: paulhatch/semantic-version@v4.0.2
         with:
           tag_prefix: "v"
