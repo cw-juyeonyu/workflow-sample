@@ -7,7 +7,7 @@ on:
 jobs:
   deploy:
     if: ${{ github.event.label.name == 'deploy development' }}
-    env: development
+    environment: development
     runs-on: ubuntu-latest
     steps:
       - name: Source Checkout
