@@ -1,8 +1,8 @@
-name: Build
+name: Deploy staging
 
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    types: [ closed ]
 
 jobs:
   deploy:
@@ -20,7 +20,7 @@ jobs:
           minor_pattern: "(MINOR)"
           format: "v${major}.${minor}.${patch}-${increment}"
 
-      - name: Build & Package
+      - name: Check
         env:
-          CONTAINER_TAG: ${{ steps.generate_version.outputs.version_tag }}-pr${{ github.event.number }}
-        run: echo "Container tag is $CONTAINER_TAG"
+          PR_CONTEXT: ${{ toJSON(github.event) }}
+        run: echo $PR_CONTEXT

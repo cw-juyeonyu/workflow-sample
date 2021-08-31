@@ -1,11 +1,12 @@
-name: Build
+name: Deploy development
 
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    types: [ labeled ]
 
 jobs:
   deploy:
+    if: ${{ github.event.label.name == 'deploy development' }}
     runs-on: ubuntu-latest
     steps:
       - name: Source Checkout
@@ -20,7 +21,13 @@ jobs:
           minor_pattern: "(MINOR)"
           format: "v${major}.${minor}.${patch}-${increment}"
 
-      - name: Build & Package
+      - name: Copy Container Image
+        env:
+          SRC_CONTAINER_TAG: ${{ steps.generate_version.outputs.version_tag }}-pr${{ github.event.number }}
+          DST_CONTAINER_TAG: ${{ steps.generate_version.outputs.version_tag }}-pr${{ github.event.number }}
+        run: echo "Source container tag is $SRC_CONTAINER_TAG, Target container tag is $DST_CONTAINER_TAG"
+
+      - name: Deploy
         env:
           CONTAINER_TAG: ${{ steps.generate_version.outputs.version_tag }}-pr${{ github.event.number }}
         run: echo "Container tag is $CONTAINER_TAG"
