@@ -18,9 +18,9 @@ jobs:
           tag_prefix: "v"
           major_pattern: "(MAJOR)"
           minor_pattern: "(MINOR)"
-          format: "v${major}.${minor}.${patch}-prerelease${increment}"
+          format: "v${major}.${minor}.${patch}-${increment}"
 
-      - name: Build
+      - name: Build & Package
         env:
-          STEPS_CONTEXT: ${{ toJSON(steps.generate_version.outputs) }}
-        run: echo "$STEPS_CONTEXT"
+          CONTAINER_TAG: ${{ steps.generate_version.outputs.version_tag }}-pr${{ github.event.number }}
+        run: echo "Container tag is $CONTAINER_TAG"
