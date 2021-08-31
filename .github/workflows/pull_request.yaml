@@ -11,16 +11,8 @@ jobs:
       - name: Source Checkout
         uses: actions/checkout@v2
 
-      - name: Generate Version
-        id: generate_version
-        uses: paulhatch/semantic-version@v4.0.2
-        with:
-          tag_prefix: "v"
-          major_pattern: "(MAJOR)"
-          minor_pattern: "(MINOR)"
-          format: "v${major}.${minor}.${patch}-${increment}"
-
-      - name: Build & Package
-        env:
-          CONTAINER_TAG: ${{ steps.generate_version.outputs.version_tag }}-pr${{ github.event.number }}
-        run: echo "Container tag is $CONTAINER_TAG"
+      - name: Build
+        run: echo "Source code build"
+      
+      - name: Test
+        run: echo "Run test code"
