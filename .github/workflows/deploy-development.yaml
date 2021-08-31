@@ -25,10 +25,9 @@ jobs:
       - name: Package
         env:
           CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
-        run: echo "Container image [$CONTAINER_TAG] push to ECR [cso-dev]"
+        run: echo "Push Container image [$CONTAINER_TAG] to ECR [cso-dev]"
 
       - name: Deploy
         env:
           CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
-          ENV_CONTEXT: ${{ toJSON(env) }}
-        run: echo $ENV_CONTEXT
+        run: echo "Deploy container image [$CONTAINER_TAG] to development environment"

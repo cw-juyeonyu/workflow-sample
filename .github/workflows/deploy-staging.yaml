@@ -33,10 +33,10 @@ jobs:
           GITHUB_CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
           ECR_CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
         run: |
-          echo "Container image [$GITHUB_CONTAINER_TAG] push to GitHub package"; \
+          echo "Push Container image [$GITHUB_CONTAINER_TAG] to GitHub package"; \
           echo "Copy container image [$ECR_CONTAINER_TAG] to ECR [cso-stg]"
 
       - name: Deploy
         env:
           CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
-        run: echo "Deploy container image [$CONTAINER_TAG]"
+        run: echo "Deploy container image [$CONTAINER_TAG] to staging environment"

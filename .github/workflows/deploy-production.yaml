@@ -1,0 +1,33 @@
+name: Deploy production
+
+on:
+  release:
+    types: [ published ]
+
+jobs:
+  deploy:
+    environment: production
+    runs-on: ubuntu-latest
+    steps:
+      - name: Source Checkout
+        uses: actions/checkout@v2
+
+      - name: Generate Version
+        id: generate_version
+        uses: paulhatch/semantic-version@v4.0.2
+        with:
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          format: "v${major}.${minor}.${patch}-pr${{ github.event.number }}"
+
+      - name: Copy container image
+        env:
+          SRC_CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
+          DST_CONTAINER_TAG: ${{ github.event.release.tag_name }}
+        run: echo "Copy GitHub Container image [$SRC_CONTAINER_TAG, staging deployed] to ECR [$DST_CONTAINER_TAG, cso-prd]"
+
+      - name: Deploy
+        env:
+          CONTAINER_TAG: ${{ github.event.release.tag_name }}
+        run: echo "Deploy container image [$CONTAINER_TAG] to production environment"
