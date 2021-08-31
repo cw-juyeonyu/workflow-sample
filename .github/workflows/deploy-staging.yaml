@@ -1,0 +1,26 @@
+name: Deploy staging
+
+on:
+  pull_request:
+    types: [ closed ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Source Checkout
+        uses: actions/checkout@v2
+
+      - name: Generate Version
+        id: generate_version
+        uses: paulhatch/semantic-version@v4.0.2
+        with:
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          format: "v${major}.${minor}.${patch}-${increment}"
+
+      - name: Check
+        env:
+          PR_CONTEXT: ${{ toJSON(github.event) }}
+        run: echo $PR_CONTEXT

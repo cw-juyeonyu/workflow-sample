@@ -1,0 +1,33 @@
+name: Deploy development
+
+on:
+  pull_request:
+    types: [ labeled ]
+
+jobs:
+  deploy:
+    if: ${{ github.event.label.name == 'deploy development' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Source Checkout
+        uses: actions/checkout@v2
+
+      - name: Generate Version
+        id: generate_version
+        uses: paulhatch/semantic-version@v4.0.2
+        with:
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          format: "v${major}.${minor}.${patch}-${increment}"
+
+      - name: Copy Container Image
+        env:
+          SRC_CONTAINER_TAG: ${{ steps.generate_version.outputs.version_tag }}-pr${{ github.event.number }}
+          DST_CONTAINER_TAG: ${{ steps.generate_version.outputs.version_tag }}-pr${{ github.event.number }}
+        run: echo "Source container tag is $SRC_CONTAINER_TAG, Target container tag is $DST_CONTAINER_TAG"
+
+      - name: Deploy
+        env:
+          CONTAINER_TAG: ${{ steps.generate_version.outputs.version_tag }}-pr${{ github.event.number }}
+        run: echo "Container tag is $CONTAINER_TAG"
