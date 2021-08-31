@@ -7,6 +7,7 @@ on:
 jobs:
   deploy:
     if: ${{ github.event.label.name == 'deploy development' }}
+    environment: development
     runs-on: ubuntu-latest
     steps:
       - name: Source Checkout
@@ -19,15 +20,14 @@ jobs:
           tag_prefix: "v"
           major_pattern: "(MAJOR)"
           minor_pattern: "(MINOR)"
-          format: "v${major}.${minor}.${patch}-${increment}"
+          format: "v${major}.${minor}.${patch}-pr${{ github.event.number }}"
 
-      - name: Copy Container Image
+      - name: Package
         env:
-          SRC_CONTAINER_TAG: ${{ steps.generate_version.outputs.version_tag }}-pr${{ github.event.number }}
-          DST_CONTAINER_TAG: ${{ steps.generate_version.outputs.version_tag }}-pr${{ github.event.number }}
-        run: echo "Source container tag is $SRC_CONTAINER_TAG, Target container tag is $DST_CONTAINER_TAG"
+          CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
+        run: echo "Push Container image [$CONTAINER_TAG] to ECR [cso-dev]"
 
       - name: Deploy
         env:
-          CONTAINER_TAG: ${{ steps.generate_version.outputs.version_tag }}-pr${{ github.event.number }}
-        run: echo "Container tag is $CONTAINER_TAG"
+          CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
+        run: echo "Deploy container image [$CONTAINER_TAG] to development environment"

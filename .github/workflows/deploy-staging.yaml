@@ -6,6 +6,8 @@ on:
 
 jobs:
   deploy:
+    if: ${{ github.event.pull_request.merged == true }}
+    environment: staging
     runs-on: ubuntu-latest
     steps:
       - name: Source Checkout
@@ -19,8 +21,22 @@ jobs:
           major_pattern: "(MAJOR)"
           minor_pattern: "(MINOR)"
           format: "v${major}.${minor}.${patch}-${increment}"
-
-      - name: Check
+      
+      - name: Build
+        run: echo "Source code build"
+      
+      - name: Test
+        run: echo "Run test code"
+        
+      - name: Package
         env:
-          PR_CONTEXT: ${{ toJSON(github.event) }}
-        run: echo $PR_CONTEXT
+          GITHUB_CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
+          ECR_CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
+        run: |
+          echo "Push Container image [$GITHUB_CONTAINER_TAG] to GitHub package"; \
+          echo "Copy container image [$ECR_CONTAINER_TAG] to ECR [cso-stg]"
+
+      - name: Deploy
+        env:
+          CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
+        run: echo "Deploy container image [$CONTAINER_TAG] to staging environment"
