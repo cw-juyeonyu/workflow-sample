@@ -18,16 +18,14 @@ jobs:
         uses: paulhatch/semantic-version@v4.0.2
         with:
           tag_prefix: "v"
-          major_pattern: "(MAJOR)"
-          minor_pattern: "(MINOR)"
           format: "v${major}.${minor}.${patch}-${increment}"
-      
+
       - name: Build
         run: echo "Source code build"
-      
+
       - name: Test
         run: echo "Run test code"
-        
+
       - name: Package
         env:
           GITHUB_CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
