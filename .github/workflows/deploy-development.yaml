@@ -20,6 +20,7 @@ jobs:
           branch: "main"
           tag_prefix: "v"
           format: "v${major}.${minor}.${patch}-pr${{ github.event.number }}"
+          bump_each_commit: true
 
       - name: Package
         env:
