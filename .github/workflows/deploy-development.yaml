@@ -13,9 +13,6 @@ jobs:
       - name: Source Checkout
         uses: actions/checkout@v2
 
-      - name: Check Version
-        run: git describe --tags
-
       - name: Generate Version
         id: generate_version
         uses: paulhatch/semantic-version@v4.0.2
