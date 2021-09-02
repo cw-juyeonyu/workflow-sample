@@ -20,6 +20,7 @@ jobs:
         id: generate_version
         uses: paulhatch/semantic-version@v4.0.2
         with:
+          branch: "HEAD"
           tag_prefix: "v"
           format: "v${major}.${minor}.${patch}-pr${{ github.event.number }}"
 
