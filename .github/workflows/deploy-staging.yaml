@@ -15,12 +15,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Generate Commit SHA
+        run: echo "COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Generate Version
         id: generate_version
         uses: paulhatch/semantic-version@v4.0.2
+        env:
+          git rev-parse --short HEAD
         with:
           tag_prefix: "v"
-          format: "v${major}.${minor}.${patch}-${increment}"
+          format: "v${major}.${minor}.${patch}-${increment}-${{ env.COMMIT_HASH_SHORT }}"
           short_tags: false
 
       - name: Build
