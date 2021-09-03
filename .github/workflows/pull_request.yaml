@@ -22,7 +22,7 @@ jobs:
 
       - name: Git Tag
         run: |
-          git tags > tags.txt
+          git tag > tags.txt
           cat tags.txt
 
       - name: Generate Version
