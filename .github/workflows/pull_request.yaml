@@ -17,6 +17,9 @@ jobs:
       - name: Test
         run: echo "Run test code"
 
+      - name: Git Tag
+        run: git fetch --all
+
       - name: Generate Version
         id: generate_version
         uses: paulhatch/semantic-version@v4.0.2
