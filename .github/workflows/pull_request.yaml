@@ -18,7 +18,7 @@ jobs:
         run: echo "Run test code"
 
       - name: Git Tag
-        run: git describe --tags
+        run: git describe --tags --always
 
       - name: Git metadata
         id: git_metadata
