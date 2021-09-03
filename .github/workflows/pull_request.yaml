@@ -10,8 +10,6 @@ jobs:
     steps:
       - name: Source Checkout
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
       - name: Build
         run: echo "Source code build"

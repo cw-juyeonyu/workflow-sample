@@ -21,8 +21,6 @@ jobs:
       - name: Generate Version
         id: generate_version
         uses: paulhatch/semantic-version@v4.0.2
-        env:
-          git rev-parse --short HEAD
         with:
           tag_prefix: "v"
           format: "v${major}.${minor}.${patch}-${increment}-${{ env.COMMIT_HASH_SHORT }}"
