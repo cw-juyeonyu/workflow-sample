@@ -13,6 +13,6 @@ jobs:
 
       - name: Build
         run: echo "Source code build"
-      
+
       - name: Test
         run: echo "Run test code"
