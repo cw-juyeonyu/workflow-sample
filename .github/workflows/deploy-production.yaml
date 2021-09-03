@@ -11,15 +11,19 @@ jobs:
     steps:
       - name: Source Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Generate Commit SHA
+        run: echo "COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Generate Version
         id: generate_version
         uses: paulhatch/semantic-version@v4.0.2
         with:
           tag_prefix: "v"
-          major_pattern: "(MAJOR)"
-          minor_pattern: "(MINOR)"
-          format: "v${major}.${minor}.${patch}-pr${{ github.event.number }}"
+          format: "v${major}.${minor}.${patch}-${increment}-${{ env.COMMIT_HASH_SHORT }}"
+          short_tags: false
 
       - name: Copy container image
         env:
