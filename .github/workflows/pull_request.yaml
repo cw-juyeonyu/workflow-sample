@@ -17,19 +17,10 @@ jobs:
       - name: Test
         run: echo "Run test code"
 
-      - name: Git Tag
-        run: git fetch --all
-
-      - name: Git Tag
-        run: |
-          git tag > tags.txt
-          cat tags.txt
-
       - name: Generate Version
         id: generate_version
         uses: paulhatch/semantic-version@v4.0.2
         with:
-          branch: "main"
           tag_prefix: "v"
           format: "v${major}.${minor}.${patch}-${increment}"
           short_tags: "false"
