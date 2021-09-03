@@ -18,9 +18,14 @@ jobs:
         run: echo "Run test code"
 
       - name: Git Tag
-        run: |
-          git fetch --tags
-          git describe --tags --always
+        run: git fetch --tags
+
+      - name: Generate Version
+        id: generate_version
+        uses: paulhatch/semantic-version@v4.0.2
+        with:
+          tag_prefix: "v"
+          format: "v${major}.${minor}.${patch}-${increment}"
 
       - name: Git metadata
         id: git_metadata
