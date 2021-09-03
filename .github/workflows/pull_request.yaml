@@ -18,7 +18,7 @@ jobs:
         run: echo "Run test code"
 
       - name: Git Tag
-        run: git fetch --tags
+        run: git fetch --all
 
       - name: Git Tag
         run: |
