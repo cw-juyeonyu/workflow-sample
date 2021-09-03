@@ -12,16 +12,15 @@ jobs:
     steps:
       - name: Source Checkout
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
       - name: Generate Version
         id: generate_version
         uses: paulhatch/semantic-version@v4.0.2
         with:
           tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
           format: "v${major}.${minor}.${patch}-pr${{ github.event.number }}"
-          short_tags: false
 
       - name: Package
         env:

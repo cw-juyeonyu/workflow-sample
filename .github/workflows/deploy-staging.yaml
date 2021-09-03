@@ -12,28 +12,22 @@ jobs:
     steps:
       - name: Source Checkout
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Generate Commit SHA
-        run: echo "COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Generate Version
         id: generate_version
         uses: paulhatch/semantic-version@v4.0.2
-        env:
-          git rev-parse --short HEAD
         with:
           tag_prefix: "v"
-          format: "v${major}.${minor}.${patch}-${increment}-${{ env.COMMIT_HASH_SHORT }}"
-          short_tags: false
-
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          format: "v${major}.${minor}.${patch}-${increment}"
+      
       - name: Build
         run: echo "Source code build"
-
+      
       - name: Test
         run: echo "Run test code"
-
+        
       - name: Package
         env:
           GITHUB_CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
