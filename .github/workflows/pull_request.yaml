@@ -26,5 +26,5 @@ jobs:
 
       - name: Test
         env:
-          GIT_CONTEXT: ${{ toJSON(steps.git_metadata.env) }}
+          GIT_CONTEXT: ${{ toJSON(steps.git_metadata.outputs) }}
         run: echo $GIT_CONTEXT
