@@ -23,5 +23,5 @@ jobs:
 
       - name: Deploy
         env:
-          CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
+          CONTAINER_TAG: pr${{ github.event.number }}-${{ env.COMMIT_HASH_SHORT }}
         run: echo "Deploy container image [$CONTAINER_TAG] to development environment"
