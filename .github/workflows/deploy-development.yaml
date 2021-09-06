@@ -19,7 +19,7 @@ jobs:
           echo "CONTAINER_TAG=pr${{ github.event.number }}-${{ env.COMMIT_HASH_SHORT }}" >> $GITHUB_ENV
 
       - name: Package
-        run: echo "Push Container image [$CONTAINER_TAG] to ECR [cso-dev]"
+        run: echo "Push Container image ${{ env.CONTAINER_TAG }} to ECR [cso-dev]"
 
       - name: Deploy
-        run: echo "Deploy container image [$CONTAINER_TAG] to development environment"
+        run: echo "Deploy container image ${{ env.CONTAINER_TAG }} to development environment"
