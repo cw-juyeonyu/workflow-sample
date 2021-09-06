@@ -12,19 +12,9 @@ jobs:
     steps:
       - name: Source Checkout
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
       - name: Generate Commit SHA
         run: echo "COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
-      - name: Generate Version
-        id: generate_version
-        uses: paulhatch/semantic-version@v4.0.2
-        with:
-          tag_prefix: "v"
-          format: "v${major}.${minor}.${patch}-${increment}-${{ env.COMMIT_HASH_SHORT }}"
-          short_tags: false
 
       - name: Build
         run: echo "Source code build"
@@ -34,11 +24,10 @@ jobs:
 
       - name: Package
         env:
-          GITHUB_CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
-          ECR_CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
+          CONTAINER_TAG: sha-${{ env.COMMIT_HASH_SHORT }}
         run: |
-          echo "Push Container image [$GITHUB_CONTAINER_TAG] to GitHub package"; \
-          echo "Copy container image [$ECR_CONTAINER_TAG] to ECR [cso-stg]"
+          echo "Push Container image [$CONTAINER_TAG] to GitHub package"; \
+          echo "Copy container image [$CONTAINER_TAG] to ECR [cso-stg]"
 
       - name: Deploy
         env:

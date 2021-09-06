@@ -11,23 +11,19 @@ jobs:
     steps:
       - name: Source Checkout
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
       - name: Generate Commit SHA
         run: echo "COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      - name: Generate Version
-        id: generate_version
-        uses: paulhatch/semantic-version@v4.0.2
-        with:
-          tag_prefix: "v"
-          format: "v${major}.${minor}.${patch}-${increment}-${{ env.COMMIT_HASH_SHORT }}"
-          short_tags: false
+      - name: Copy container image
+        env:
+          SRC_CONTAINER_TAG: sha-${{ env.COMMIT_HASH_SHORT }}
+          DST_CONTAINER_TAG: ${{ github.event.release.tag_name }}
+        run: echo "Copy GitHub Container image [$SRC_CONTAINER_TAG, staging deployed] to GitHub Container image [$DST_CONTAINER_TAG]"
 
       - name: Copy container image
         env:
-          SRC_CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
+          SRC_CONTAINER_TAG: sha-${{ env.COMMIT_HASH_SHORT }}
           DST_CONTAINER_TAG: ${{ github.event.release.tag_name }}
         run: echo "Copy GitHub Container image [$SRC_CONTAINER_TAG, staging deployed] to ECR [$DST_CONTAINER_TAG, cso-prd]"
 
