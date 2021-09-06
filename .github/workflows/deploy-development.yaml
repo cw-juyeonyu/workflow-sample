@@ -13,15 +13,13 @@ jobs:
       - name: Source Checkout
         uses: actions/checkout@v2
 
-      - name: Generate Commit SHA
-        run: echo "COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Generate Container Tag
+        run: |
+          COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)
+          echo "CONTAINER_TAG=pr${{ github.event.number }}-$COMMIT_HASH_SHORT" >> $GITHUB_ENV
 
       - name: Package
-        env:
-          CONTAINER_TAG: pr${{ github.event.number }}-${{ env.COMMIT_HASH_SHORT }}
-        run: echo "Push Container image [$CONTAINER_TAG] to ECR [cso-dev]"
+        run: echo "Push Container image ${{ env.CONTAINER_TAG }} to ECR [cso-dev]"
 
       - name: Deploy
-        env:
-          CONTAINER_TAG: pr${{ github.event.number }}-${{ env.COMMIT_HASH_SHORT }}
-        run: echo "Deploy container image [$CONTAINER_TAG] to development environment"
+        run: echo "Deploy container image ${{ env.CONTAINER_TAG }} to development environment"
