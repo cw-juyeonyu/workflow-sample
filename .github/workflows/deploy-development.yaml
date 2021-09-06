@@ -15,8 +15,8 @@ jobs:
 
       - name: Generate Container Tag
         run: |
-          echo "COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "CONTAINER_TAG=pr${{ github.event.number }}-${{ env.COMMIT_HASH_SHORT }}" >> $GITHUB_ENV
+          COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)
+          echo "CONTAINER_TAG=pr${{ github.event.number }}-$COMMIT_HASH_SHORT" >> $GITHUB_ENV
 
       - name: Package
         run: echo "Push Container image ${{ env.CONTAINER_TAG }} to ECR [cso-dev]"
