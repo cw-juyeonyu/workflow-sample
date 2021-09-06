@@ -31,5 +31,5 @@ jobs:
 
       - name: Deploy
         env:
-          CONTAINER_TAG: ${{ steps.generate_version.outputs.version }}
+          CONTAINER_TAG: sha-${{ env.COMMIT_HASH_SHORT }}
         run: echo "Deploy container image [$CONTAINER_TAG] to staging environment"
