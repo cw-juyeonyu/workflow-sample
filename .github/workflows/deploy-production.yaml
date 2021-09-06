@@ -12,18 +12,20 @@ jobs:
       - name: Source Checkout
         uses: actions/checkout@v2
 
-      - name: Generate Commit SHA
-        run: echo "COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Generate Container Tag
+        run: |
+          COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)
+          echo "CONTAINER_TAG=sha-$COMMIT_HASH_SHORT" >> $GITHUB_ENV
 
       - name: Copy container image
         env:
-          SRC_CONTAINER_TAG: sha-${{ env.COMMIT_HASH_SHORT }}
+          SRC_CONTAINER_TAG: ${{ env.CONTAINER_TAG }}
           DST_CONTAINER_TAG: ${{ github.event.release.tag_name }}
         run: echo "Copy GitHub Container image [$SRC_CONTAINER_TAG, staging deployed] to GitHub Container image [$DST_CONTAINER_TAG]"
 
       - name: Copy container image
         env:
-          SRC_CONTAINER_TAG: sha-${{ env.COMMIT_HASH_SHORT }}
+          SRC_CONTAINER_TAG: ${{ env.CONTAINER_TAG }}
           DST_CONTAINER_TAG: ${{ github.event.release.tag_name }}
         run: echo "Copy GitHub Container image [$SRC_CONTAINER_TAG, staging deployed] to ECR [$DST_CONTAINER_TAG, cso-prd]"
 
