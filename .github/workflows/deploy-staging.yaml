@@ -9,7 +9,7 @@ on:
 
 jobs:
   deploy:
-    if: ${{ github.event.push || github.event.pull_request.merged == true }}
+    if: ${{ github.event_name == 'push' || github.event.pull_request.merged == true }}
     environment: staging
     runs-on: ubuntu-latest
     steps:
