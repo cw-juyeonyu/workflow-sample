@@ -22,18 +22,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
           
-      - name: Create file and upload file to S3
+      - name: Create file
         run: |
-          echo <<EOF >index.html
+          cat <<EOF >index.html
           <html>
           <body>
             <p>This is datasync test page ${{ github.sha }}</p>
           </body>
           </html>
           EOF
-          cat index.html
+      - name: Upload file to S3
+        run: |
           aws s3api put-object \
             --bucket ${{ vars.BUCKET_NAME }} \
-            --key test/index.html \
+            --key index.html \
             --body index.html
        
