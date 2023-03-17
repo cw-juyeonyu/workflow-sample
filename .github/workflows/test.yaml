@@ -38,6 +38,11 @@ jobs:
             --bucket ${{ vars.BUCKET_NAME }} \
             --key index.html \
             --body index.html
+          
+          aws s3api put-object \
+            --bucket ${{ vars.BUCKET_NAME }} \
+            --key marker.txt \
+            --body marker.txt
       
       - name: Run datasync
         run: |
