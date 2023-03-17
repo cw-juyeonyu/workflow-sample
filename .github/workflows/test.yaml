@@ -22,7 +22,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
           
-      - name: Create file
+      - name: Create file and upload file to S3
         run: |
           echo <<EOF >index.html
           <html>
@@ -31,10 +31,9 @@ jobs:
           </body>
           </html>
           EOF
-       
-      - name: Upload File to S3
-        run: |
+          cat index.html
           aws s3api put-object \
             --bucket ${{ vars.BUCKET_NAME }} \
-            --key index.html \
+            --key test/index.html \
             --body index.html
+       
