@@ -1,4 +1,4 @@
-name: Deploy staging
+name: File send efs throught s3
 
 on:
   push:
@@ -31,10 +31,16 @@ jobs:
           </body>
           </html>
           EOF
+      
       - name: Upload file to S3
         run: |
           aws s3api put-object \
             --bucket ${{ vars.BUCKET_NAME }} \
             --key index.html \
             --body index.html
+      
+      - name: Run datasync
+        run: |
+          aws datasync start-task-execution \
+            --task-arn ${{ vars.DATASYNC_TASK_ARN }}
        
