@@ -35,6 +35,6 @@ jobs:
       - name: Upload File to S3
         run: |
           aws s3api put-object \
-            --bucket ${{ env.BUCKET_NAME }} \
+            --bucket ${{ vars.BUCKET_NAME }} \
             --key index.html \
             --body index.html
