@@ -18,4 +18,6 @@ jobs:
         run: echo "Run test code"
 
       - name: Env
-        run: echo $HOME
+        run: |-
+          echo $HOME
+          ls -al
