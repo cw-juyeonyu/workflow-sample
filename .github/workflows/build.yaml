@@ -16,3 +16,6 @@ jobs:
 
       - name: Test
         run: echo "Run test code"
+
+      - name: Env
+        run: echo $HOME
