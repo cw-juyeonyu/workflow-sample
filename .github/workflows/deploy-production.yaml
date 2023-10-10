@@ -11,6 +11,9 @@ jobs:
     steps:
       - name: Source Checkout
         uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.release.tag_name }}
 
       - name: Dump GitHub context
         id: github_context_step
