@@ -9,43 +9,7 @@ jobs:
   deploy:
     environment: test
     runs-on: ubuntu-latest
-    env:
-      AWS_REGION: ap-northeast-2
     steps:
-      - name: Source Checkout
-        uses: actions/checkout@v3
-      
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-          
-      - name: Create file
-        run: |
-          cat <<EOF >index.html
-          <html>
-          <body>
-            <p>This is datasync test page ${{ github.sha }}</p>
-          </body>
-          </html>
-          EOF
-      
-      - name: Upload file to S3
-        run: |
-          aws s3api put-object \
-            --bucket ${{ vars.BUCKET_NAME }} \
-            --key index.html \
-            --body index.html
-          
-          aws s3api put-object \
-            --bucket ${{ vars.BUCKET_NAME }} \
-            --key marker.txt \
-            --body marker.txt
-      
-      - name: Run datasync
-        run: |
-          aws datasync start-task-execution \
-            --task-arn ${{ vars.DATASYNC_TASK_ARN }}
-       
+      - name: Dump GitHub context
+        id: github_context_step
+        run: echo '${{ toJSON(github) }}'
