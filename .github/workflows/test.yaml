@@ -16,3 +16,6 @@ jobs:
 
       - name: Run docker
         run: docker run hello-world
+
+      - name: Dump runner spec
+        run: cat /proc/meminfo | grep MemTotal
