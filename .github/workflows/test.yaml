@@ -1,21 +1,30 @@
-name: File send efs throught s3
+name: github event test
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types:
+      - 'opened'
+      - 'synchronize'
+      - 'reopened'
+      - 'closed'
 
 jobs:
-  deploy:
-    environment: test
+  always:
     runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context
-        id: github_context_step
         run: echo '${{ toJSON(github) }}'
 
-      - name: Run docker
-        run: docker run hello-world
+  not_closed:
+    if: ${{ github.event.pull_request.type != 'closed' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        run: echo 'not closed pull request type'
 
-      - name: Dump runner spec
-        run: cat /proc/meminfo | grep MemTotal
+  merged_to_main:
+    if: ${{ github.event.pull_request.merged == true && github.event.pull_request.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        run: echo 'merged to main'
