@@ -28,3 +28,10 @@ jobs:
     steps:
       - name: Dump GitHub context
         run: echo 'merged to main'
+
+  merged_to_not_main:
+    if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'not-main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        run: echo 'merged to not-main'
