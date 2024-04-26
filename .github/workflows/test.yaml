@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context
-        run: echo 'not closed pull request type'
+        run: echo 'not closed and not draft pull request type'
 
   merged_to_main:
     if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' }}
