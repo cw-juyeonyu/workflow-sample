@@ -1,4 +1,4 @@
-name: File send efs throught s3
+name: github event test
 
 on:
   pull_request:
