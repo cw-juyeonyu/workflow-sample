@@ -48,6 +48,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           script: |
+            const fs = require('fs').promises;
             github.rest.repos.uploadReleaseAsset({
               owner: context.repo.owner,
               repo: context.repo.repo,
