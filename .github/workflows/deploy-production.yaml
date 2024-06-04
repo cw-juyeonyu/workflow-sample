@@ -50,3 +50,8 @@ jobs:
         env:
           CONTAINER_TAG: ${{ github.event.release.tag_name }}
         run: echo "Deploy container image [$CONTAINER_TAG] to production environment"
+
+      - name: Build Api Specs.
+        run: |
+          docker run --rm -v ${PWD}:/spec redocly/cli bundle api-spec.yaml \
+            --output /spec/openapi.json
