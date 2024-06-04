@@ -42,5 +42,16 @@ jobs:
           docker run --rm -v ${PWD}:/spec ghcr.io/redocly/cli bundle api-spec.yaml \
             --output /spec/openapi.json
 
-      - name: Dump GitHub context
-        run: echo '${{ toJSON(github) }}'
+      - name: Upload Api Specs. Assets to Release
+        uses: actions/github-script@v7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            github.rest.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: ${{ github.event.release.id }},
+              name: 'openapi.json',
+              data: await fs.readFile('openapi.json'),
+            });
