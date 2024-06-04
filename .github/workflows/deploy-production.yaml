@@ -42,7 +42,5 @@ jobs:
           docker run --rm -v ${PWD}:/spec ghcr.io/redocly/cli bundle api-spec.yaml \
             --output /spec/openapi.json
 
-      - name: View Api Specs.
-        run: |
-          ls -al openapi.json
-          cat openapi.json
+      - name: Dump GitHub context
+        run: echo '${{ toJSON(github) }}'
