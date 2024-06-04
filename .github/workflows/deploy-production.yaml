@@ -39,5 +39,10 @@ jobs:
 
       - name: Build Api Specs.
         run: |
-          docker run --rm -v ${PWD}:/spec redocly/cli bundle api-spec.yaml \
+          docker run --rm -v ${PWD}:/spec ghcr.io/redocly/cli bundle api-spec.yaml \
             --output /spec/openapi.json
+
+      - name: View Api Specs.
+        run: |
+          ls -al openapi.json
+          cat openapi.json
