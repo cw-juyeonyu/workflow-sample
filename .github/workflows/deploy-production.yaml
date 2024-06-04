@@ -53,6 +53,6 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: ${{ github.event.release.id }},
-              name: 'openapi.json',
+              name: 'OpenAPI (json)',
               data: await fs.readFile('openapi.json'),
             });
