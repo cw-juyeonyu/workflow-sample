@@ -1,0 +1,3112 @@
+openapi: 3.1.0
+info:
+  title: ABC SDK Rest Api
+  version: 2024.06.001
+  summary: ABC SDK Rest Api
+  description: ABC SDK 기능의 Rest Api 정의서 입니다.
+  contact:
+    name: IT서비스개발팀
+    email: juyeon.yu@coway.com
+servers:
+  - url: 'https://sdk.abc.coway.do'
+paths:
+  /oauth2/authorize:
+    get:
+      summary: Authorization Code 요청
+      tags:
+        - oauth2
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionKey:
+                    type: string
+                    description: Authorization Code Request 세션 정보 식별자로 `/oauth2/login` Request 에서 해당 값이 `x-abc-sdk-acrs` Header 값으로 포함되어야 합니다.
+                required:
+                  - sessionKey
+        '400':
+          $ref: '#/components/responses/oauth2-error'
+      operationId: get-oauth2-authorize
+      description: |-
+        사용자 AccessToken 발급을 위한 Authorizataion code 요청입니다.
+
+        응답값의 sessionKey 를 이용하여 `/oauth2/login` API 를 실행하면 됩니다.
+      security: []
+      parameters:
+        - schema:
+            type: string
+            example: code
+          in: query
+          name: response_type
+          description: Authorization Code 요청을 위한 필수 항목으로 `code` 문자열을 값으로 합니다.
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: client_id
+          description: 인증을 사용하려는 서버에 등록된 client id 문자열을 값으로 합니다.
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: code_challenge
+          description: OAuth2 인증 과정의 보안 강화를 위한 문자열 값으로 `BASE64(SHA256(code_verifier))` 연산이 적용된 값 입니다. BASE64 시 **_no padding_** 옵션이 적용되어야 합니다.
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: code_challenge_method
+          description: PKCE 인코딩 방식으로 `S256` 문자열을 값으로 합니다.
+          required: true
+  /oauth2/login:
+    post:
+      summary: 사용자 인증
+      operationId: post-oauth2-login
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    description: Access Token 과 교환 가능한 Authorization Code 입니다.
+                required:
+                  - code
+        '400':
+          $ref: '#/components/responses/oauth2-error'
+        '401':
+          $ref: '#/components/responses/oauth2-error'
+      description: Resource Owner 인증 및 인증 성공시 access token 으로 교환 가능한 authorization code 를 발급 받기 위한 API Endpoint 입니다.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-acrs'
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: IAM 인증 아이디로 SSO 의 `이메일 아이디 ('@' 뒤 도메인 제외 ID만 입력)` 에 해당하는 문자열 값 입니다.
+                password:
+                  type: string
+                  description: IAM 인증 비밀번호로 SSO 의 `이메일 아이디 ('@' 뒤 도메인 제외 ID만 입력)` 에 해당하는 문자열 값 입니다.
+              required:
+                - username
+                - password
+            examples:
+              default-example:
+                value:
+                  username: tester
+                  password: testpassword
+        description: 사용자가 입력한 인증 정보입니다.
+      tags:
+        - oauth2
+  /oauth2/token:
+    post:
+      summary: Access Token 발급
+      operationId: post-oauth2-token
+      responses:
+        '200':
+          description: OK - 사용자 인증이 성공된 경우 응답
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    minLength: 1
+                    description: 인증에 성공한 사용자 식별 OAuth2 JWT 값으로 이후 사용자 인증 정보가 필요한 Request Authorization Header 값에 주입이 되어야 합니다.
+                  refresh_token:
+                    type: string
+                    minLength: 1
+                    description: |-
+                      access_token 이 만료된 경우 access_token 을 갱신하기 위한 요청시 전달되어야 하는 OAuth2 갱신 token 입니다.
+                      client 등록 정보에 refresh_token 이 허용되어 있어야 합니다.
+                  token_type:
+                    type: string
+                    minLength: 1
+                    description: Request Authorization Header 의 access_token 값 앞에 붙어야 하는 토큰 유형 접두사입니다.
+                  expires_in:
+                    type: integer
+                    description: token 발급으로부터 access_token 이 유효한 시간 (초) 입니다.
+                required:
+                  - access_token
+                  - token_type
+                  - expires_in
+              examples:
+                defaults:
+                  value:
+                    access_token: eyJraWQiOiI0NjE3OWM2MC1hODMyLTRkYTctODQwZC01ZTVlZjA2MGQzYzgiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJjdy1zZGstbG9jYWwiLCJhdWQiOiJjdy1zZGstbG9jYWwiLCJuYmYiOjE2MzE4MzkwOTEsImV4cCI6MTYzMTgzOTM5MSwiaWF0IjoxNjMxODM5MDkxfQ.htDKZTwwoiSsh2s3ZPPvO2SztEbJfnkhxwIzFbAGkHevt1mlgFV47425NlAFW1GSprBqSFMKPPUpAg02hvM02MAeKyY-4_4BEomB-SJm22E2vIokm8BjSZnn6gsQvsyf2yDiAM9sGZNVDm3WERwjUbAKQkfbpT1jjjfJIN7i8fY59wEqu9UKW-ZFQnL7P9D3vBY57-6HibwlhHt7YkBP6p8f7eudD5Vm-saOMa7f9i6K_uRWnNWqyXPUh0TD2RZKVtODx0AM8PY4ezoGCbMgc9ATXqaU5O4VO7onDNalBZwH4SfFATPaCX-qogrJad2bmsVViNJ8CzWMpjNjOqJMTg
+                    refresh_token: '-iSeScIHkBvhtmXSklg_1m9xJhce679a3AKwxdDEXGP0XwAgYgU-T36mCPFFKPZT8TxrraQknT43u96W_fzZNqDKT2pnOaNSWgzYgH9Xzh57H3IVM-270BWdcFB4QtNH'
+                    token_type: Bearer
+                    expires_in: 299
+        '400':
+          $ref: '#/components/responses/oauth2-error'
+        '401':
+          $ref: '#/components/responses/oauth2-error'
+        '500':
+          $ref: '#/components/responses/oauth2-error'
+      description: |
+        사용자를 인증할 수 있는 OAuth2 Access Token 을 을 발급받습니다.
+        Access Token 값은 JWT 형식입니다.
+
+        JWT 의 Claim 항목은 아래와 같습니다.
+
+        * sub (subject): Backend 기준의 사용자 식별자
+        * aud (audience): access token 발급 대상 client 식별자
+        * nbf (not before time): access token 유효 시작 시간
+        * exp (expiration time): access token 만료 시간
+        * iat (issued at time): access token 발급 시간
+        * name: 사용자 이름
+      security:
+        - oauth2_client_authentication_key: []
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    grant_type:
+                      type: string
+                      description: OAuth2 Token 발급 유형
+                      enum:
+                        - authorization_code
+                        - refresh_token
+                        - client_credentials
+                  required:
+                    - grant_type
+                - anyOf:
+                    - type: object
+                      $ref: '#/components/schemas/token-authorization-code'
+                      description: grant_type=authorization_code 인 경우
+                    - $ref: '#/components/schemas/token-refresh-token'
+                      description: grant_type=refresh_token 인 경우
+                    - $ref: '#/components/schemas/token-client-credentials'
+                      description: grant_type=client_credentials 인 경우
+            examples:
+              grant_type=authorization_code:
+                value:
+                  grant_type: authorization_code
+                  code: 84-a1g3jsSNl_Jt2PAoiH4ajk2Mfy65UbJQYAAyNPLTgCAnz5eccm8JnecqOggyQBA0G9l5Xc9csKp02svnU5i3xGa2-SoXb0UI0-NqmNdzK4HasLlEc0lWalvY0u8nc
+                  code_verifier: FgqSzO8xkoeVXODevbVXKBp7liCoOjcZ1fwiwVWS6irF12Ye8EFqfbaAxRzgRrn0FN3ISPclHsNJhu5QE303yldhP8hOFSLOtRhHddsxMpKZHrHYz1TGElnDQ5mWXKc4
+              grant_type=refresh_token:
+                value:
+                  grant_type: refresh_token
+                  refresh_token: V67u-Yp0QkAwMfLIxk79QkDLcrHlGItnchrv7Ya9kCoo3rUi5FR5BcHFq74G3tLy5PsX6wrqHmIFNHRZUC_VhuDB1FOq3u4E86COGUP7MWhkNNssC4H7tMmVNlwCndHc
+              grant_type=client_credentials:
+                value:
+                  grant_type: client_credentials
+        description: 사용자를 인증하는 Access Token 정보 입니다.
+      tags:
+        - oauth2
+    parameters: []
+  /graphql:
+    post:
+      summary: GraphQL Endpoint
+      operationId: post-graphql
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type:
+                      - object
+                      - array
+                      - 'null'
+                    description: "정상적으로 처리된 Graphql 응답\x1C"
+                  errors:
+                    type: array
+                    description: |-
+                      Graphql 요청 실행 오류
+                      Graphql 실행에 오류가 있는 경우에만 표시
+                      참고: https://www.apollographql.com/docs/react/data/error-handling/#graphql-error-policies
+                    items:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          description: 오류 안내 메시지
+                        extensions:
+                          type: object
+                          required:
+                            - errorType
+                          properties:
+                            errorType:
+                              type: string
+                              description: |-
+                                오류 유형 코드
+
+                                * UNAUTHENTICATED - 인증 안 된 사용자의 접근
+                                * FORBIDDEN - 권한 없는 사용자의 접근
+                                * INTERNAL_LINK - 확인되지 않은 서버 오류
+                            status:
+                              type: integer
+                              description: 오류에 해당하는 Http Status Code
+                        path:
+                          type: array
+                          description: 오류가 발생된 graphql query path
+                          items:
+                            type: string
+                      required:
+                        - message
+                        - extensions
+                required:
+                  - data
+              examples:
+                처리 성공일시:
+                  value:
+                    data:
+                      me:
+                        name: tester
+                오류 발생시:
+                  value:
+                    errors:
+                      - message: Server error occurred.
+                        extensions:
+                          errorType: INTERNAL_LINK
+                          status: 500
+                    data: null
+                인증 토큰이 유효하지 않은 경우:
+                  value:
+                    data: {}
+                    errors:
+                      - message: UNAUTHENTICATED
+                        extensions:
+                          errorType: UNAUTHENTICATED
+                        path:
+                          - me
+        '401':
+          description: Unauthorized
+      description: GraphQL Request URL 입니다.
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: Graphql Query 문자열
+                variables:
+                  type:
+                    - object
+                    - array
+                  description: Graphql Variables 문자열
+              required:
+                - query
+                - variables
+            examples:
+              query me:
+                value:
+                  query: |-
+                    {
+                      me {
+                        id
+                        name
+                        email
+                        group
+                        allowActions {
+                          resourceId
+                          actionId
+                        }
+                        mobilePhone
+                        title
+                        position
+                      }
+                    }
+                  variables: {}
+        description: Graphql Query Body
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-proj'
+        - $ref: '#/components/parameters/x-abc-sdk-lang'
+      tags:
+        - graphql
+  /users/me:
+    get:
+      summary: 로그인 사용자 정보 조회
+      tags:
+        - users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        description: 사용자 기본 정보
+                        required:
+                          - id
+                          - name
+                          - email
+                          - group
+                          - mobilePhone
+                          - title
+                          - position
+                        properties:
+                          id:
+                            type: string
+                            description: 사용자 식별자 (사원번호)
+                          name:
+                            type: string
+                            description: 이름
+                          email:
+                            type: string
+                            description: 이메일 주소
+                          group:
+                            type: string
+                            description: 소속 이름
+                          mobilePhone:
+                            type: string
+                            description: EHR 에 등록된 휴대전화 번호
+                          title:
+                            type: string
+                            description: EHR 에 등록된 사용자 직급
+                          position:
+                            type: string
+                            description: EHR 에 등록된 사용자 직책
+                    required:
+                      - data
+              examples:
+                Example 1:
+                  value:
+                    code: OK
+                    detail: 성공
+                    data:
+                      id: '20221111'
+                      name: 아무개
+                      email: us@abc.com
+                      group: ABCUS
+                      mobilePhone: '01012341234'
+                      title: 직급
+                      position: 직책
+        '401':
+          description: Unauthorized
+      operationId: get-users-me
+      description: 인증된 사용자의 기본 정보를 조회하는 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters: []
+    parameters: []
+  '/users/{userId}/email':
+    get:
+      summary: 사용자 이메일 조회
+      tags:
+        - users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        description: 사용자 기본 정보
+                        required:
+                          - email
+                        properties:
+                          email:
+                            type: string
+                            description: 이메일 주소
+                    required:
+                      - data
+              examples:
+                Example 1:
+                  value:
+                    code: OK
+                    detail: ''
+                    data:
+                      email: us@abc.com
+        '401':
+          description: Unauthorized
+      operationId: get-users-userid-email
+      description: ABC SDK 를 사용하는 사용자의 이메일을 조회하는 API Endpoint 입니다.
+      security:
+        - abc_sdk_apikey: []
+      parameters: []
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+        description: 사용자 식별자
+  /users:
+    post:
+      summary: 사용자 정보 조회
+      tags:
+        - users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          description: 사용자 기본 정보
+                          required:
+                            - id
+                            - name
+                            - email
+                            - group
+                          properties:
+                            id:
+                              type: string
+                              description: 사용자 식별자 (사원번호)
+                            name:
+                              type: string
+                              description: 이름
+                            email:
+                              type: string
+                              description: 이메일 주소
+                            group:
+                              type: string
+                              description: 소속 이름
+                    required:
+                      - data
+              examples:
+                Example 1:
+                  value:
+                    code: OK
+                    detail: 성공
+                    data:
+                      - id: '20221111'
+                        name: 아무개
+                        email: us@abc.com
+                        group: ABCUS
+                      - id: '20221112'
+                        name: user2
+                        email: nca@abc.com
+                        group: ABCUS
+                      - id: unknown
+                        name: ''
+                        email: ''
+                        group: ''
+        '401':
+          description: Unauthorized
+      operationId: post-users
+      description: ABC SDK 과 인증정보를 관리하는 사용자의 기본 정보를 조회하는 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-lang'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: array
+                  description: 조회 대상 사용사 식별자 목록
+                  items:
+                    type: string
+              required:
+                - userIds
+    parameters: []
+  /acl/resource/action/allowed:
+    post:
+      summary: 리소스 권한 허용 확인
+      operationId: post-acl-resource-action-allowed
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required:
+                          - allowed
+                        properties:
+                          allowed:
+                            type: boolean
+                            description: |-
+                              리소스 권한 허용 여부
+
+                              * true - 허용 됨
+                              * false - 허용되지 않음
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: 리소스 권한 허용 여부 확인을 위한 API Endpoint 입니다.
+      security:
+        - abc_sdk_apikey: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: 권한 확인 대상 IAM (코웨이 사내 통합인증) User 식별자
+                resourceId:
+                  type: string
+                  description: 사전에 정의하여 ABC SDK 에 저장된 권한 조회 대상 리소스 식별자
+                actionId:
+                  type: string
+                  description: 사전에 정의하여 ABC SDK 에 저장된 권한 조회 대상 리소스의 동작 식별자
+                scope:
+                  type: string
+                  description: ABC SDK 에 저장된 권한 추가 조건 식별자
+              required:
+                - userId
+                - resourceId
+                - actionId
+        description: ''
+      tags:
+        - acl
+  /acl/resource/allowed:
+    post:
+      summary: 허용 리소스 권한 목록 조회
+      operationId: post-acl-resource-allowed
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 사용자에게 허용된 권한 목록
+                        items:
+                          type: object
+                          properties:
+                            resourceId:
+                              type: string
+                              description: 사전에 정의하여 ABC SDK 에 저장된 리소스 식별자 중 허용된 리소스 식별자
+                            actionId:
+                              type: string
+                              description: 사전에 정의하여 ABC SDK 에 저장된 리소스 동작 식별자 중 허용된 리소스 동작 식별자
+                          required:
+                            - resourceId
+                            - actionId
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: 지정된 사용자에게 허용된 리소스 권한 목록 조회를 위한 API Endpoint 입니다.
+      security:
+        - abc_sdk_apikey: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: 권한 확인 대상 IAM (코웨이 사내 통합인증) User 식별자
+              required:
+                - userId
+      tags:
+        - acl
+  /acl/apikey/validated:
+    post:
+      summary: 유효한 앱 API KEY 여부 확인
+      operationId: post-acl-apikey-validated
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required:
+                          - validated
+                        properties:
+                          validated:
+                            type: boolean
+                            description: |-
+                              유효한 API Key 여부
+                              * true - 유효함
+                              * false - 유효하지 않음
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: apikey 가 유효한지 여부의 확인을 위한 API Endpoint 입니다.
+      security:
+        - abc_sdk_apikey: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                appApiKey:
+                  type: string
+                  description: 권한 인가 여부 확인 대상 App 의 ApiKey 문자열
+              required:
+                - appApiKey
+        description: ''
+      tags:
+        - acl
+    parameters: []
+  /apps/list:
+    post:
+      summary: 앱 목록
+      tags:
+        - appstore-app
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: '#/components/schemas/app-item'
+                            - type: object
+                              properties:
+                                versionList:
+                                  type: array
+                                  items:
+                                    $ref: '#/components/schemas/app-version-item'
+                              required:
+                                - versionList
+                    required:
+                      - data
+              examples:
+                app-1-version-1:
+                  value:
+                    code: OK
+                    detail: 성공
+                    data:
+                      - id: 8rtEfG5B
+                        name: 코웨이 스마트세일즈
+                        iconUrl: 'http://example.com'
+                        packages: com.abc.us.example
+                        versionList:
+                          - id: aaaaaaa1
+                            version: 1.2.9
+                            buildCode: '175'
+                            mandatory: true
+                            releaseDate: '2023-03-01T09:00:10Z'
+                        env: PRD
+                app-1-version-n:
+                  value:
+                    code: OK
+                    detail: 성공
+                    data:
+                      - id: 8rtEfG5B
+                        name: 코웨이 스마트세일즈
+                        iconUrl: 'http://example.com'
+                        packages: com.abc.us.example
+                        versionList:
+                          - id: '117'
+                            version: 1.2.9
+                            buildCode: '175'
+                            mandatory: true
+                            releaseDate: '2023-03-01T09:00:10Z'
+                          - id: '118'
+                            version: 1.2.10
+                            buildCode: '179'
+                            mandatory: false
+                            releaseDate: '2023-03-02T09:00:10Z'
+                        env: PRD
+                app-n:
+                  value:
+                    code: OK
+                    detail: 성공
+                    data:
+                      - id: 8rtEfG8B
+                        name: 코웨이 OTP
+                        iconUrl: 'http://example.com'
+                        packages: com.abc.us.example
+                        versionList:
+                          - id: '11'
+                            version: 1.1.6
+                            buildCode: '128'
+                            mandatory: true
+                            releaseDate: '2023-01-01T09:00:10Z'
+                          - id: '12'
+                            version: 1.1.7
+                            buildCode: '129'
+                            mandatory: true
+                            releaseDate: '2023-01-01T16:00:10Z'
+                        env: STG
+                      - id: 8rtEfG5B
+                        name: 코웨이 스마트세일즈
+                        iconUrl: 'http://example.com'
+                        packages: com.abc.us.example.app
+                        versionList:
+                          - id: '117'
+                            version: 1.2.9
+                            buildCode: '58'
+                            mandatory: true
+                            releaseDate: '2023-03-01T09:00:10Z'
+                        env: PRD
+                empty:
+                  value:
+                    code: OK
+                    detail: 성공
+                    data: []
+        '401':
+          description: Unauthorized
+      operationId: post-apps-list
+      security:
+        - oauth2_access_token: []
+      description: |-
+        인증된 사용자가 설치 대상에 포함되어 있는 앱 목록을 조회하는 API Endpoint 입니다.
+
+        앱 목록은 이름으로 오름차순으로 정렬되어야 합니다.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                platform:
+                  type: string
+                  description: 앱 플랫폼 구분자
+                  enum:
+                    - IOS
+                    - ANDROID
+              required:
+                - platform
+            examples:
+              iOS:
+                value:
+                  platform: IOS
+              Android:
+                value:
+                  platform: IOS
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-lang'
+  /apps/detail:
+    parameters: []
+    post:
+      summary: 앱 정보 조회
+      tags:
+        - appstore-app
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/app-item'
+                          - type: object
+                            properties:
+                              description:
+                                type: string
+                                description: 앱 설명 (PlainText)
+                              release:
+                                allOf:
+                                  - $ref: '#/components/schemas/app-version-item'
+                                  - type: object
+                                    properties:
+                                      releaseNote:
+                                        type: string
+                                        description: 버전 변경사항 문자열 (PlainText)
+                                    required:
+                                      - releaseNote
+                            required:
+                              - description
+                              - release
+                    required:
+                      - data
+              examples:
+                defaults:
+                  value:
+                    code: OK
+                    detail: 성공
+                    data:
+                      id: 8rtEfG5B
+                      name: 코웨이 디지털세일즈
+                      iconUrl: 'http://example.com'
+                      env: PRD
+                      packages: com.abc.us.digitalsales
+                      description: |-
+                        * AR체럼 기능: 증강현실로 코웨이 제품을 배치/색상을 변경하거나 제품의 기능을 체럼해 볼 수 있습니다.
+                        * 제품링크 공유: 코웨이 제품에 대한 정보를 고객에게 공유할 수 있습니다.
+                        * 콘텐츠 공유: 프로모션과 관련되거나 생활에 도움이 되는 콘텐츠를 고객에게 손쉽게 공유할 수 있습니다.
+                      release:
+                        id: aaaaaaaa1
+                        version: 1.6.0
+                        buildCode: '122'
+                        mandatory: false
+                        releaseDate: '2023-03-02T09:00:22Z'
+                        releaseNote: |-
+                          수정사항 1
+                          수정사항 2
+                          수정사항 3
+        '401':
+          description: Unauthorized
+      operationId: post-apps-detail
+      description: 앱의 상세 설치 정보 조회를 위한 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                appId:
+                  type: string
+                  description: 앱 식별자
+                versionId:
+                  type: string
+                  description: 버전 식별자
+              required:
+                - appId
+                - versionId
+            examples:
+              defaults:
+                value:
+                  appId: 8rtEfG5B
+                  versionId: '116'
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-lang'
+  /apps/install:
+    post:
+      summary: 앱 패키지 다운로드 정보 조회
+      tags:
+        - appstore-app
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required:
+                          - filename
+                          - installUrl
+                        properties:
+                          filename:
+                            type: string
+                            description: 패키지 파일명
+                          installUrl:
+                            type: string
+                            description: |-
+                              패키지 설치 파일 다운로드 URL
+
+                              * Android: apk 파일 URL
+                              * iOS: plist 파일 URL
+                    required:
+                      - data
+              examples:
+                Android:
+                  value:
+                    code: OK
+                    detail: 성공
+                    data:
+                      filename: abc-catalog-seller-1.3.1-20220616-2127.apk
+                      installUrl: 'https://cdn.abc.do/NhiGjXWy/abc-catalog-seller-1.3.1-20220616-2127.apk'
+                iOS:
+                  value:
+                    code: OK
+                    detail: 성공
+                    data:
+                      filename: 1.6.2.ipa
+                      installUrl: 'https://sdk.abc.do/apps/version/package/C4tUdjwc.plist'
+        '401':
+          description: Unauthorized
+      operationId: post-apps-install
+      description: App 패키지 다운로드 정보 조회를 위한 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                appId:
+                  type: string
+                  description: 패키지를 다운로드 받기 위한 앱 식별자
+                versionId:
+                  type: string
+                  description: 패키지를 다운로드 받기 위한 앱 버전 식별자
+              required:
+                - appId
+                - versionId
+  /apps/version/last:
+    post:
+      summary: 앱 최신 버전 조회
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required:
+                          - versionId
+                          - version
+                          - buildCode
+                          - mandatory
+                          - installUrl
+                        description: 최신 버전 정보
+                        properties:
+                          versionId:
+                            type: string
+                            description: 최신 버전 식별자
+                          version:
+                            type: string
+                            description: 최신 앱의 버전 정보
+                          buildCode:
+                            type: string
+                            description: 최신 앱의 빌드 정보
+                          mandatory:
+                            type: boolean
+                            default: false
+                            description: |-
+                              강제 업데이트 필요 여부
+
+                              * true: 강제 업데이트 버전
+                              * false: 선택 업데이트 버전
+                          installUrl:
+                            type: string
+                            format: uri
+                            description: 앱 설치 URL
+                    required:
+                      - data
+              examples:
+                update-optional:
+                  value:
+                    code: OK
+                    detail: 성공
+                    data:
+                      versionId: '106'
+                      version: 1.6.3
+                      buildCode: '121'
+                      mandatory: false
+                      installUrl: 'http://example.com'
+                update-mandatory:
+                  value:
+                    code: OK
+                    detail: 성공
+                    data:
+                      versionId: '109'
+                      version: 1.7.0
+                      buildCode: '123'
+                      mandatory: true
+                      installUrl: 'http://example.com'
+        '400':
+          description: Bad request
+      operationId: post-apps-version-last
+      description: 앱의 최신 버전 조회 API Endpoint 입니다.
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                appId:
+                  type: string
+                  description: 앱 식별자
+                version:
+                  type: string
+                  description: 현재 설치된 앱 버전
+                buildCode:
+                  type: string
+                  description: 앱 빌드 번호
+              required:
+                - appId
+                - version
+                - buildCode
+            examples:
+              Example 1:
+                value:
+                  appId: 8rtEfG5B
+                  version: 1.5.0
+                  buildCode: 1.0.0
+      tags:
+        - appstore-app
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-lang'
+  /popup/v1:
+    get:
+      summary: 팝업 조회
+      operationId: get-popup-v1
+      responses:
+        '200':
+          description: |-
+            OK
+            표시할 팝업이 없거나 API 서버에서의 처리 오류시에는 JSON 빈 배열인 `[]` 이 응답됩니다.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: |-
+                          사용자에게 표시되어야 하는 팝업 목록
+                          우선순위가 높은 팝업에서 낮은 순으로 정렬 되어 있습니다.
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 팝업 식별자 입니다.
+                            title:
+                              type: string
+                              description: 팝업 제목 입니다.
+                            hideDurationDays:
+                              type: integer
+                              description: |-
+                                다시보지 않기 숨김 처리 일자입니다.
+                                0 보다 큰 값의 경우에만 다시보지 않기 숨김 기능이 필요합니다.
+                            onlyOnce:
+                              type: boolean
+                              description: 1회만 노출하는 팝업 팝업 여부입니다.
+                            contentsRaw:
+                              type: string
+                              description: |
+                                팝업 컨텐츠 영역에 표시될 HTML 문자열 입니다.
+
+                                `contentsUrl` 가 빈 문자열이고, `contentsRaw` 이 빈 문자열이 아닌 경우 `contentsRaw` 의 HTML 을 팝업 본문 영역에 표시 합니다.
+                            contentsUrl:
+                              type: string
+                              description: |
+                                팝업의 컨텐츠 영역에 표시될 이미지 URL 입니다.
+
+                                `contentsRaw` 가 빈 문자열이고, `contentsUrl` 이 빈 문자열이 아닌 경우 `contentsUrl` 의 이미지를 팝업 본문 영역에 표시 합니다.
+                            actionType:
+                              $ref: '#/components/schemas/popup-action-type'
+                            actionLinkUri:
+                              type: string
+                              description: |
+                                `확인` 버튼 클릭시 이동할 링크 주소 입니다.
+                          required:
+                            - id
+                            - hideDurationDays
+                            - onlyOnce
+                            - contentsRaw
+                            - contentsUrl
+                            - actionType
+                            - actionLinkUri
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: 조회 시점 기준으로 앱과 앱의 사용자 기준으로 표시되어야 하는 팝업 목록 조회 API 입니다.
+      security:
+        - abc_sdk_apikey: []
+      parameters:
+        - schema:
+            type: string
+            example: login
+          in: query
+          name: placement
+          description: |
+            ABC SDK 에 정의된 팝업 표시 위치 구분 문자열로 대소문자를 구분하지 않습니다.
+
+            _ABC 프로젝트 예시_
+            * APP_OPEN: 앱 오픈 시점
+            * LOGIN: 로그인 페이지
+            * HOME: 홈 페이지
+          required: true
+        - $ref: '#/components/parameters/x-abc-sdk-user'
+      tags:
+        - abc-ct-app
+        - popup
+  /consent/v1:
+    get:
+      summary: 서약·동의 조회
+      operationId: get-consent-v1
+      responses:
+        '200':
+          description: |-
+            OK
+            표시할 서약·동의가 없거나 API 서버에서의 처리 오류시에는 JSON 빈 배열인 `[]` 이 응답됩니다.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: |-
+                          사용자에게 표시되어야 하는 서약·동의 목록
+                          우선순위가 높은 서약·동의에서 낮은 서약·동의로 정렬 되어 있습니다.
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 서약·동의 식별자 입니다.
+                            title:
+                              type: string
+                              description: 서약·동의 제목 입니다.
+                            termsContentsRaw:
+                              type: string
+                              description: 서약·동의 컨텐츠 영역에 표시될 HTML 문자열 입니다.
+                            consentLogUri:
+                              type: string
+                              description: |-
+                                사용자의 동의시 기록을 위해 호출되어야 하는 URI 입니다.
+                                사용자가 동의한 경우 해당 URI 가 Get method 로 호출되면 됩니다.
+                          required:
+                            - id
+                            - title
+                            - termsContentsRaw
+                            - consentLogUri
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: 조회 시점 기준으로 앱과 앱의 사용자 기준으로 표시되어야 하는 서약·동의 목록 조회 API 입니다.
+      security:
+        - abc_sdk_apikey: []
+      parameters:
+        - schema:
+            type: string
+            example: login
+          in: query
+          name: placement
+          description: |
+            ABC SDK 에 정의된 서약·동의 표시 위치 구분 문자열로 대소문자를 구분하지 않습니다.
+
+            _ABC 프로젝트 예시_
+            * LOGIN: 로그인 페이지
+            * HOME: 홈 페이지
+          required: true
+        - $ref: '#/components/parameters/x-abc-sdk-user'
+          required: true
+          description: 앱 또는 서비스에 로그인된 사용자 식별자 입니다.
+      tags:
+        - abc-ct-app
+        - consent
+  /consent/v1/{userId}/history:
+    get:
+      summary: 사용자 서약·동의 동의 이력 조회
+      operationId: get-consent-v1-userid-history
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 사용자가 동의한 서약·동의 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 서약·동의 유형 식별자 입니다.
+                            label:
+                              type: string
+                              description: 서약·동의 유형 이름 입니다.
+                            terms:
+                              type: array
+                              description: |
+                                사용자고 동의한 서약·동의 버전 목록 입니다.
+                                서약·동의 개정/시행일자 최신 항목부터 오래된 항목 순서로 정렬 되어 있습니다.
+                              items:
+                                type: object
+                                properties:
+                                  effectiveDate:
+                                    type: string
+                                    description: 서약·동의 개정/시행일자
+                                    format: date
+                                  termsContentsRaw:
+                                    type: string
+                                    description: 서약·동의 컨텐츠 영역에 표시될 HTML 문자열 입니다.
+                                  consentAt:
+                                    type: string
+                                    description: Timezone 정보가 포함된 서약·동의 일시 입니다.
+                              required:
+                                - effectiveDate
+                                - termsContentsRaw
+                                - consentAt
+                          required:
+                            - id
+                            - label
+                            - terms
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: 사용자가 동의한 서약·동의 이력을 조회하는 API 입니다.
+      security:
+        - abc_sdk_apikey: []
+      parameters:
+        - name: userId
+          in: path
+          schema:
+            type: string
+          description: 사용자 식별자 입니다.
+          required: true
+      tags:
+        - abc-ct-app
+        - consent
+  /consent/v1/{userConsentSignature}:
+    get:
+      summary: 사용자 서약·동의 동의 이력 저장
+      operationId: get-consent-v1-userconsentlogkey
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        description: dummy
+                    required:
+                      - data
+        '400':
+          description: bad request
+      description: 사용자가 동의한 서약·동의 이력을 조회하는 API 입니다.
+      security: []
+      parameters:
+        - name: userConsentSignature
+          in: path
+          schema:
+            type: string
+          description: 서약·동의 사용자 동의 여부를 저장하기 위해 시스템에서 생성한 식별자 입니다.
+          required: true
+      tags:
+        - abc-ct-app
+        - consent
+  /abc/ct/v1/popups/placements:
+    get:
+      summary: CT 앱 관리자 팝업 관리 메뉴의 팝업 노출 페이지 목록 조회
+      operationId: get-abc-ct-v1-popups-placements
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 팝업 노출 페이지 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 팝업 노출 페이지 식별자 입니다.
+                            label:
+                              type: string
+                              description: 팝업 노출 페이지 표기 입니다.
+                            description:
+                              type: string
+                              description: 팝업 노출 페이지 설명 입니다.
+                          required:
+                            - id
+                            - label
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 팝업 노출 페이지 목록 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+      tags:
+        - abc-ct-app-admin
+    parameters: []
+  /abc/ct/v1/popups:
+    post:
+      summary: CT 앱 관리자 팝업 관리 메뉴의 팝업 관리 목록 조회
+      operationId: post-abc-ct-v1-popups
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 팝업 레코드 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 팝업 레코드 식별자 입니다.
+                            placementId:
+                              type: string
+                              description: 팝업 노출 페이지 식별자 입니다.
+                            title:
+                              type: string
+                              description: 팝업 제목 입니다.
+                            publishStatus:
+                              type: string
+                              description: |
+                                팝업 게시 상태 코드 입니다.
+
+                                * `SCHEDULED`: 게시 예약
+                                * `ONGOING`: 게시 중
+                                * `FINISHED`: 게시 종료
+                              enum:
+                                - SCHEDULED
+                                - ONGOING
+                                - FINISHED
+                            createdAt:
+                              type: string
+                              description: 팝업 레코드 생성일시
+                              format: date-time
+                            createdBy:
+                              type: string
+                              description: 팝업 레코드 생성 사용자 식별자
+                          required:
+                            - id
+                            - placementId
+                            - title
+                            - publishStatus
+                            - createdAt
+                            - createdBy
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 팝업 목록 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+      tags:
+        - abc-ct-app-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conditions:
+                  type: object
+                  properties:
+                    placementId:
+                      type: string
+                      description: 노출 페이지 식별자
+                    publishStatus:
+                      type: string
+                      description: |
+                        게시 상태 조건
+
+                        * `SCHEDULED`: 게시 예약
+                        * `ONGOING`: 게시 중
+                        * `FINISHED`: 게시 종료
+                        * null value: 전체
+                      enum:
+                        - SCHEDULED
+                        - ONGOING
+                        - FINISHED
+                    createdFrom:
+                      type: string
+                      description: 사용자 단말기의 Timezone 이 적용된 작성일 최소 조회 조건
+                      format: date-time
+                    createdTo:
+                      type: string
+                      description: 사용자 단말기의 Timezone 이 적용된 작성일 최대 조회 조건
+                      format: date-time
+                    keyword:
+                      type: string
+                      description: '제목, 내용 검색 키워드로 대소문자 구분하지 않음.'
+    parameters: []
+  /abc/ct/v1/popups/item:
+    post:
+      summary: CT 앱 관리자 팝업 관리 메뉴의 팝업 레코드 생성
+      operationId: post-abc-ct-v1-popups-item
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/popup-item'
+                        description: 생성된 팝업 레코드
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 팝업 생성 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+      tags:
+        - abc-ct-app-admin
+      requestBody:
+        description: 신규 내용이 포함된 팝업 레코드
+        required: true
+        $ref: '#/components/requestBodies/popup-item-request'
+    parameters: []
+  '/abc/ct/v1/popups/item/{popupId}':
+    get:
+      summary: CT 앱 관리자 팝업 관리 메뉴의 팝업 레코드 조회
+      operationId: get-abc-ct-v1-popups-item-popupid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/popup-item'
+                          - type: object
+                            description: 팝업 레코드
+                            properties:
+                              updatedAt:
+                                type: string
+                                description: |
+                                  Timezone 정보가 포함된 팝업 레코드 최근 수정일시
+
+                                  수정 이력이 없는 경우 null value 로 응답 됩니다.
+                                format: date-time
+                              updatedBy:
+                                type: string
+                                description: |
+                                  팝업 레코드 최근 수정 사용자 식별자
+
+                                  수정 이력이 없는 경우 null value 로 응답 됩니다.
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 팝업 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: popupId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 조회 대상 팝업 레코드 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+    put:
+      summary: CT 앱 관리자 팝업 관리 메뉴의 팝업 레코드 수정
+      operationId: put-abc-ct-v1-popups-item-popupid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/popup-item'
+                          - type: object
+                            properties:
+                              updatedAt:
+                                type: string
+                                description: Timezone 정보가 포함된 팝업 레코드 최근 수정일시
+                                format: date-time
+                              updatedBy:
+                                type: string
+                                description: 팝업 레코드 최근 수정 사용자 식별자
+                        description: 팝업 레코드
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 팝업 수정 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: popupId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 조회 대상 팝업 레코드 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+      requestBody:
+        description: 수정된 내용이 포함된 팝업 레코드
+        required: true
+        $ref: '#/components/requestBodies/popup-item-request'
+    delete:
+      summary: CT 앱 관리자 팝업 관리 메뉴의 팝업 레코드 삭제
+      operationId: delete-abc-ct-v1-popups-item-popupid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 팝업 삭제 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: popupId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 삭제 대상 팝업 레코드 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+  '/abc/ct/v1/popups/item/{popupId}/revisions':
+    get:
+      summary: CT 앱 관리자 팝업 관리 메뉴의 팝업 레코드 수정 이력 조회
+      operationId: get-abc-ct-v1-popups-item-popupid-revisions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 최근 수정 내역에서 오래된 수정 내역으로 정렬된 레코드 수정 이력 목록
+                        items:
+                          type: object
+                          description: 수정 이력 팝업 레코드
+                          properties:
+                            revisionNo:
+                              type: integer
+                              description: 변경 번호
+                            placementId:
+                              type: string
+                              description: 팝업 노출 페이지 식별자 입니다.
+                            title:
+                              type: string
+                              description: 팝업 제목 입니다.
+                            publishFrom:
+                              type: string
+                              description: Timezone 정보가 포함된 팝업 노출 시작 일시
+                              format: date-time
+                            publishTo:
+                              type: string
+                              description: |
+                                Timezone 정보가 포함된 팝업 노출 종료 일시
+
+                                `종료기한없음` 인 경우 null value 입니다.
+                            hideDurationDays:
+                              type: integer
+                              description: |
+                                다시 보지 않기 처리될 일수 입니다.
+
+                                * -1: 한번 노출 후 다시 노출 하지 않음 (다시보지 않기)
+                                * 0: 노출 페이지 접근시 매번 노출 (설정 안 함)
+                                * 1: 노출 페이지 접근시 일 1회 노출 (하루동안 보지 않기)
+                                * 7: 노출 페이지 접근시 7일 간격으로 노출 (일주일동안 보지 않기)
+                            bodyRawHtml:
+                              type: string
+                              description: WYSIWYG 에디터로 작성된 팝업 내용에 표시될 HTML 문자열 입니다.
+                            actionType:
+                              $ref: '#/components/schemas/popup-action-type'
+                            actionLinkUri:
+                              type: string
+                              description: '버튼 유형이 `투 버튼` 일 경우, 링크 URL 문자열 입니다.'
+                            revisedAt:
+                              type: string
+                              description: Timezone 정보가 포함된 팝업 레코드 수정일시
+                              format: date-time
+                            revisedBy:
+                              type: string
+                              description: 팝업 레코드 수정 사용자 식별자
+                          required:
+                            - id
+                            - placementId
+                            - title
+                            - publishFrom
+                            - hideDurationDays
+                            - bodyRawHtml
+                            - actionType
+                            - actionLinkUri
+                            - revisedAt
+                            - revisedBy
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 팝업 수정 이력 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: popupId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 조회 대상 팝업 레코드 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+  '/abc/ct/v1/popups/{placementId}/items/priority':
+    get:
+      summary: CT 앱 관리자 팝업 관리 메뉴의 팝업 노출 우선 순위 관리 목록 조회
+      operationId: get-abc-ct-v1-popups-placementid-items-priority
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 팝업 우선 순위 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 팝업 레코드 식별자 입니다.
+                            title:
+                              type: string
+                              description: 팝업 제목 입니다.
+                          required:
+                            - id
+                            - title
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 팝업 노출 우선 순위 목록 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: placementId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 조회 대상 팝업 노출 페이지 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+    put:
+      summary: CT 앱 관리자 팝업 관리 메뉴의 팝업 노출 우선 순위 수정
+      operationId: put-abc-ct-v1-popups-placementid-items-priority
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 팝업 우선 순위 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 팝업 레코드 식별자 입니다.
+                            title:
+                              type: string
+                              description: 팝업 제목 입니다.
+                          required:
+                            - id
+                            - title
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 팝업 노출 우선 순위를 수정하는 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: placementId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 조회 대상 팝업 노출 페이지 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                priorityItemIds:
+                  type: array
+                  description: 우선 노출되어야 하는 팝업 부터 우선 순위가 낮은 팝업 순서로 정렬된 팝업 식별자 목록
+                  items:
+                    type: string
+  /abc/ct/v1/popups/items/close:
+    put:
+      summary: CT 앱 관리자 팝업 관리 메뉴의 팝업 게시 종료 처리
+      operationId: put-abc-ct-v1-popups-items-close
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        description: dummy
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 팝업 게시 종료 처리를 위한 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+      tags:
+        - abc-ct-app-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                closeItemIds:
+                  type: array
+                  description: 게시 종료 처리 대상 팝업 레코드 식별자 목록
+                  items:
+                    type: string
+  /abc/ct/v1/consent/terms/categories:
+    get:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 서약·동의 유형 목록 조회
+      operationId: get-abc-ct-v1-consent-terms-categories
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 서약·동의 유형 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 서약·동의 유형 식별자 입니다.
+                            label:
+                              type: string
+                              description: 서약·동의 유형 이름 입니다.
+                            description:
+                              type: string
+                              description: 서약·동의 유형 설명 입니다.
+                          required:
+                            - id
+                            - label
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 유형 목록 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+      tags:
+        - abc-ct-app-admin
+    parameters: []
+  /abc/ct/v1/consent/terms/placements:
+    get:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 노출 페이지 목록 조회
+      operationId: get-abc-ct-v1-consent-terms-placements
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 서약·동의 노출 페이지 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 서약·동의 노출 페이지 식별자 입니다.
+                            label:
+                              type: string
+                              description: 서약·동의 노출 페이지 이름 입니다.
+                            description:
+                              type: string
+                              description: 서약·동의 노출 페이지 설명 입니다.
+                          required:
+                            - id
+                            - label
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 노출 페이지 목록 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+      tags:
+        - abc-ct-app-admin
+    parameters: []
+  /abc/ct/v1/consent/terms:
+    post:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 서약·동의 목록 조회
+      operationId: post-abc-ct-v1-consent-terms
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 서약·동의 레코드 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 서약·동의 레코드 식별자 입니다.
+                            categoryId:
+                              type: string
+                              description: 서약·동의 유형 식별자 입니다.
+                            placementId:
+                              type: string
+                              description: 서약·동의 노출 페이지 식별자 입니다.
+                            title:
+                              type: string
+                              description: 서약·동의 제목 입니다. (TODO Check)
+                            publishStatus:
+                              type: string
+                              description: |
+                                서약·동의 게시 상태 코드 입니다.
+
+                                * `SCHEDULED`: 게시 예약
+                                * `ONGOING`: 게시 중
+                                * `FINISHED`: 게시 종료
+                              enum:
+                                - SCHEDULED
+                                - ONGOING
+                                - FINISHED
+                            createdAt:
+                              type: string
+                              description: 서약·동의 레코드 생성일시
+                              format: date-time
+                            createdBy:
+                              type: string
+                              description: 서약·동의 레코드 생성 사용자 식별자
+                          required:
+                            - id
+                            - categoryId
+                            - placementId
+                            - title
+                            - publishStatus
+                            - createdAt
+                            - createdBy
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 목록 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+      tags:
+        - abc-ct-app-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conditions:
+                  type: object
+                  properties:
+                    categoryId:
+                      type: string
+                      description: 유형 식별자
+                    placementId:
+                      type: string
+                      description: 노출 페이지 식별자
+                    publishStatus:
+                      type: string
+                      description: |
+                        게시 상태 조건
+
+                        * `SCHEDULED`: 게시 예약
+                        * `ONGOING`: 게시 중
+                        * `FINISHED`: 게시 종료
+                        * null value: 전체
+                      enum:
+                        - SCHEDULED
+                        - ONGOING
+                        - FINISHED
+                    createdFrom:
+                      type: string
+                      description: 사용자 단말기의 Timezone 이 적용된 작성일 최소 조회 조건
+                      format: date-time
+                    createdTo:
+                      type: string
+                      description: 사용자 단말기의 Timezone 이 적용된 작성일 최대 조회 조건
+                      format: date-time
+                    keyword:
+                      type: string
+                      description: '제목, 내용 검색 키워드로 대소문자 구분하지 않음.'
+    parameters: []
+  /abc/ct/v1/consent/terms/item:
+    post:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 서약·동의 레코드 생성
+      operationId: post-abc-ct-v1-consent-terms-item
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/consent-terms-item'
+                        description: 생성된 서약·동의 레코드
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 생성 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+      tags:
+        - abc-ct-app-admin
+      requestBody:
+        description: 생성 서약·동의 정보
+        required: true
+        $ref: '#/components/requestBodies/consent-terms-item-request'
+    parameters: []
+  '/abc/ct/v1/consent/terms/item/{termsId}':
+    get:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 서약·동의 레코드 조회
+      operationId: get-abc-ct-v1-consent-terms-item-termsid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/consent-terms-item'
+                          - type: object
+                            description: 서약·동의 레코드
+                            properties:
+                              updatedAt:
+                                type: string
+                                description: |
+                                  Timezone 정보가 포함된 서약·동의 레코드 최근 수정일시
+
+                                  수정 이력이 없는 경우 null value 로 응답 됩니다.
+                                format: date-time
+                              updatedBy:
+                                type: string
+                                description: |
+                                  서약·동의 레코드 최근 수정 사용자 식별자
+
+                                  수정 이력이 없는 경우 null value 로 응답 됩니다.
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: termsId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 조회 대상 서약·동의 레코드 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+    put:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 서약·동의 레코드 수정
+      operationId: put-abc-ct-v1-consent-terms-item-termsid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/consent-terms-item'
+                          - type: object
+                            properties:
+                              updatedAt:
+                                type: string
+                                description: Timezone 정보가 포함된 서약·동의 레코드 최근 수정일시
+                                format: date-time
+                              updatedBy:
+                                type: string
+                                description: 서약·동의 레코드 최근 수정 사용자 식별자
+                        description: 팝업 레코드
+                    required:
+                      - data
+        '400':
+          description: |
+            Bad request
+
+            Error code:
+              * `LOCKED` - 서약·동의에 기록된 사용자가 있어 수정 불가
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 수정 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: termsId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 수정 대상 서약·동의 레코드 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+      requestBody:
+        description: 서약·동의 수정 내용
+        required: true
+        $ref: '#/components/requestBodies/consent-terms-item-request'
+    delete:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 서약·동의 레코드 삭제
+      operationId: delete-abc-ct-v1-consent-terms-item-termsid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+        '400':
+          description: |
+            Bad request
+
+            Error code:
+              * `LOCKED` - 서약·동의에 기록된 사용자가 있어 삭제 불가
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 삭제 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: termsId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 수정 대상 서약·동의 레코드 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+  '/abc/ct/v1/consent/terms/item/{termsId}/revisions':
+    get:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 서약·동의 변경 이력 조회
+      operationId: get-abc-ct-v1-consent-terms-termsid-revisions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 최근 수정 내역에서 오래된 수정 내역으로 정렬된 레코드 수정 이력 목록
+                        items:
+                          type: object
+                          description: 서약·동의 수정 이력 레코드
+                          properties:
+                            revisionNo:
+                              type: integer
+                              description: 변경 번호
+                            categoryId:
+                              type: string
+                              description: 서약·동의 유형 식별자 입니다.
+                            placementId:
+                              type: string
+                              description: 팝업 노출 페이지 식별자 입니다.
+                            title:
+                              type: string
+                              description: 서약·동의 제목 입니다.
+                            publishFrom:
+                              type: string
+                              description: Timezone 정보가 포함된 서약·동의 노출 시작 일시
+                              format: date-time
+                            publishTo:
+                              type: string
+                              description: |
+                                Timezone 정보가 포함된 서약·동의 노출 종료 일시
+
+                                `종료기한없음` 인 경우 null value 입니다.
+                            effectiveDate:
+                              type: string
+                              description: 서약·동의 개정/시행일자
+                              format: date
+                            bodyRawHtml:
+                              type: string
+                              description: WYSIWYG 에디터로 작성된 서약·동의 내용에 표시될 HTML 문자열 입니다.
+                            revisedAt:
+                              type: string
+                              description: Timezone 정보가 포함된 서약·동의 레코드 수정일시
+                              format: date-time
+                            revisedBy:
+                              type: string
+                              description: 서약·동의 레코드 수정 사용자 식별자
+                          required:
+                            - revisionNo
+                            - categoryId
+                            - placementId
+                            - title
+                            - publishFrom
+                            - effectiveDate
+                            - bodyRawHtml
+                            - revisedAt
+                            - revisedBy
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 수정 이력 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: termsId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 수정 대상 서약·동의 레코드 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+  '/abc/ct/v1/consent/terms/{placementId}/items/priority':
+    get:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 서약·동의 노출 우선 순위 관리 목록 조회
+      operationId: get-abc-ct-v1-consent-terms-placementid-items-priority
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 서약·동의 우선 순위 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 서약·동의 레코드 식별자 입니다.
+                            categoryId:
+                              type: string
+                              description: 서약·동의 유형 식별자 입니다.
+                            title:
+                              type: string
+                              description: 서약·동의 제목 입니다.
+                          required:
+                            - id
+                            - categoryId
+                            - title
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 노출 우선 순위 목록 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: placementId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 조회 대상 팝업 노출 페이지 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+    put:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 서약·동의 노출 우선 순위 수정
+      operationId: put-abc-ct-v1-consent-terms-placementid-items-priority
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 수정된 서약·동의 우선 순위 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 서약·동의 레코드 식별자 입니다.
+                            categoryId:
+                              type: string
+                              description: 서약·동의 유형 식별자 입니다.
+                            title:
+                              type: string
+                              description: 서약·동의 제목 입니다.
+                          required:
+                            - id
+                            - categoryId
+                            - title
+                    required:
+                      - data
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 노출 우선 순위를 수정하는 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: placementId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 수정 대상 서약·동의 노출 페이지 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                priorityItemIds:
+                  type: array
+                  description: 우선 노출되어야 하는 서약·동의 부터 우선 순위가 낮은 서약·동의 순서로 정렬된 서약·동의 식별자 목록
+                  items:
+                    type: string
+  /abc/ct/v1/consent/terms/items/close:
+    put:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 서약·동의 게시 종료 처리
+      operationId: put-abc-ct-v1-consent-terms-items-close
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        description: dummy
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 게시 종료 처리를 위한 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+      tags:
+        - abc-ct-app-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                closeItemIds:
+                  type: array
+                  description: 게시 종료 처리 대상 서약·동의 레코드 식별자 목록
+                  items:
+                    type: string
+  /abc/ct/v1/consent/{termsId}/users/groups:
+    get:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 동의 대상 사용자 그룹 (지점) 목록 조회
+      operationId: get-abc-ct-v1-consent-termsid-users-groups
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 서약·동의 대상 사용자 그룹 (지점) 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 서약·동의 사용자 그룹 (지점) 식별자 입니다.
+                            label:
+                              type: string
+                              description: 서약·동의 사용자 그룹 (지점) 이름 입니다.
+                          required:
+                            - id
+                            - label
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 대상 사용자 그룹 (지점) 목록 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: termsId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 조회 대상 서약·동의 레코드 식별자 입니다.
+      tags:
+        - abc-ct-app-admin
+  /abc/ct/v1/consent/{termsId}/users:
+    get:
+      summary: CT 앱 관리자 서약·동의 관리 메뉴의 동의 대상 사용자 목록 조회
+      operationId: get-abc-ct-v1-consent-termsid-users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/default-response'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: 서약·동의 대상 사용자 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: 서약·동의 사용자 식별자 입니다.
+                            groupId:
+                              type: string
+                              description: 서약·동의 사용자 그룹 (지점) 식별자 입니다.
+                            name:
+                              type: string
+                              description: 서약·동의 사용자 이름 입니다.
+                            consentAt:
+                              type: string
+                              description: |
+                                Timezone 정보가 포함된 서약·동의 일시 입니다.
+
+                                동의하지 않은 사용자는 null value 로 응답 됩니다.
+                          required:
+                            - id
+                            - groupId
+                            - name
+        '401':
+          description: Unauthorized
+      description: CT App Admin 을 위한 서약·동의 사용자 목록 조회 API Endpoint 입니다.
+      security:
+        - oauth2_access_token: []
+      parameters:
+        - $ref: '#/components/parameters/x-abc-sdk-apikey'
+        - name: termsId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 수정 대상 서약·동의 레코드 식별자 입니다.
+        - name: group
+          in: query
+          required: false
+          schema:
+            type: string
+          description: |
+            사용자 목록 조회 그룹 (지점) 조건 입니다.
+
+            해당 파라메터가 없거나 빈 문자열 이면, 그룹 (지점) 제한 없이 조회 됩니다.
+        - name: consent
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: |
+            사용자 목록 조회 동의 여부 조건 입니다.
+
+            * `true`: 동의한 사용자만 조회 됩니다.
+            * `false`: 동의하지 않은 사용자만 조회 됩니다.
+            * 파라메터가 없거나 `true` 또는 `false` 가 아닌 경우: 전체 사용자가 조회 됩니다.
+      tags:
+        - abc-ct-app-admin
+components:
+  schemas:
+    default-response:
+      title: default-response
+      type: object
+      properties:
+        code:
+          type: string
+          description: API 실행 결과 코드 또는 에러 상세 코드
+        detail:
+          type: string
+          description: API 실행 결과 메시지
+      description: |-
+        API 기본 응답 모델입니다.
+        해당 모델에 `data` 항목을 추가하여 API 응답을 합니다.
+      examples:
+        - code: OK
+          detail: 성공
+    token-authorization-code:
+      title: grant_type=authorization_code
+      type: object
+      description: grant_type=authorization_code 인 경우의 request parameter
+      properties:
+        code:
+          type: string
+          description: '`/oauth2/login` API 에서 응답된 `code` 문자열 값'
+        code_verifier:
+          type: string
+          description: '`/oauth2/authorize` API 호출시 전달되었던 `code_challenge` 의 원본'
+      required:
+        - code
+        - code_verifier
+    token-refresh-token:
+      title: grant_type=refresh_token
+      type: object
+      properties:
+        refresh_token:
+          type: string
+          description: '`/oauth2/token` 응답에 포함되어 있던 `refresh_token` 문자열 값'
+      required:
+        - refresh_token
+    token-client-credentials:
+      title: grant_type=client_credentials
+      type: object
+    app-item:
+      title: app-item
+      type: object
+      examples:
+        - id: 8rtEfG5B
+          name: 코웨이 스마트세일즈
+          iconUrl: 'http://example.com'
+          versionList:
+            - code: '117'
+              version: 1.2.9
+              buildCode: '21'
+              mandatory: true
+              releaseDate: '2023-03-01T09:00:10Z'
+          env: PRD
+          packages: com.abc.us.digitalsales
+          scheme: ds
+        - id: 8rtEfG5B
+          name: 코웨이 스마트세일즈
+          iconUrl: 'http://example.com'
+          versionList:
+            - code: '117'
+              version: 1.2.9
+              buildcode: '112'
+              mandatory: true
+              releaseDate: '2023-03-01T09:00:10Z'
+            - code: '118'
+              version: 1.2.10
+              buildcode: '121'
+              mandatory: false
+              releaseDate: '2023-03-02T09:00:10Z'
+          env: PRD
+          packages: com.abc.us.digitalsales
+          scheme: ds
+      properties:
+        id:
+          type: string
+          description: 앱 레코드 식별자
+        name:
+          type: string
+          description: 앱 이름
+        iconUrl:
+          type: string
+          format: uri
+          description: 아이콘 이미지 URI
+        env:
+          type: string
+          enum:
+            - PRD
+            - STG
+            - DEV
+          description: |-
+            앱 배포환경 구분 코드
+
+            * `PRD` - 운영환경 배포 앱
+            * `STG` - 검증환경 배포 앱
+            * `DEV` - 개발환경 배포 앱
+        packages:
+          type: string
+          description: 앱 패키지 이름
+        scheme:
+          type: string
+          description: 앱 scheme 값
+      required:
+        - id
+        - name
+        - iconUrl
+        - env
+        - packages
+    app-version-item:
+      title: app-version-item
+      type: object
+      examples:
+        - id: '107'
+          version: 1.6.0
+          buildCode: '162'
+          mandatory: false
+          releaseDate: '2023-03-02T09:00:22Z'
+        - id: '108'
+          version: 1.6.1
+          buildCode: '185'
+          mandatory: true
+          releaseDate: '2023-03-03T09:10:37Z'
+      properties:
+        id:
+          type: string
+          description: 앱 버전 레코드 식별자
+        version:
+          type: string
+          description: |-
+            앱 버전 정보
+
+            * iOS 의 "bundle-version" 항목
+            * Android 의 "versionName" 항목
+        buildCode:
+          type: string
+          description: |-
+            앱 빌드 정보
+
+            * iOS 의 "bundle-build" 항목
+            * Android 의 "versionCode" 항목
+        mandatory:
+          type: boolean
+          default: false
+          description: |-
+            강제 업데이트 필요 여부
+
+            * true: 강제 업데이트 버전
+            * false: 선택 업데이트 버전
+        releaseDate:
+          type: string
+          description: 앱 배포 일시
+          format: date-time
+      required:
+        - id
+        - version
+        - buildCode
+        - mandatory
+        - releaseDate
+    popup-action-type:
+      title: popup-action-type
+      type: string
+      description: |
+        팝업에서 확인 버튼 유형 입니다.
+
+        * NONE: `닫기` 버튼만 있는 경우
+        * INTERNAL_LINK: `닫기` 와 `확인` 버튼이 있고, 확인 버튼 동작 유형이 `내부 링크` 인 경우
+        * EXTERNAL_LINK: `닫기` 와 `확인` 버튼이 있고, 확인 버튼 동작 유형이 `외부 링크` 인 경우
+      enum:
+        - NONE
+        - INTERNAL_LINK
+        - EXTERNAL_LINK
+    popup-item:
+      title: popup-item
+      type: object
+      description: 팝업 레코드
+      properties:
+        id:
+          type: string
+          description: 팝업 레코드 식별자 입니다.
+        placementId:
+          type: string
+          description: 팝업 노출 페이지 식별자 입니다.
+        title:
+          type: string
+          description: 팝업 제목 입니다.
+        publishFrom:
+          type: string
+          description: Timezone 정보가 포함된 팝업 노출 시작 일시
+          format: date-time
+        publishTo:
+          type: string
+          description: |
+            Timezone 정보가 포함된 팝업 노출 종료 일시
+
+            `종료기한없음` 인 경우 null value 입니다.
+        hideDurationDays:
+          type: integer
+          description: |
+            다시 보지 않기 처리될 일수 입니다.
+
+            * -1: 한번 노출 후 다시 노출 하지 않음 (다시보지 않기)
+            * 0: 노출 페이지 접근시 매번 노출 (설정 안 함)
+            * 1: 노출 페이지 접근시 일 1회 노출 (하루동안 보지 않기)
+            * 7: 노출 페이지 접근시 7일 간격으로 노출 (일주일동안 보지 않기)
+        bodyRawHtml:
+          type: string
+          description: WYSIWYG 에디터로 작성된 팝업 내용에 표시될 HTML 문자열 입니다.
+        actionType:
+          $ref: '#/components/schemas/popup-action-type'
+        actionLinkUri:
+          type: string
+          description: '버튼 유형이 `투 버튼` 일 경우, 링크 URL 문자열 입니다.'
+        createdAt:
+          type: string
+          description: Timezone 정보가 포함된 팝업 레코드 생성일시
+          format: date-time
+        createdBy:
+          type: string
+          description: 팝업 레코드 생성 사용자 식별자
+      required:
+        - id
+        - placementId
+        - title
+        - publishFrom
+        - hideDurationDays
+        - bodyRawHtml
+        - actionType
+        - actionLinkUri
+        - createdAt
+        - createdBy
+    consent-terms-item:
+      title: consent-terms-item
+      type: object
+      description: 서약·동의 레코드
+      properties:
+        id:
+          type: string
+          description: 서약·동의 레코드 식별자 입니다.
+        categoryId:
+          type: string
+          description: 서약·동의 유형 식별자 입니다.
+        placementId:
+          type: string
+          description: 서약·동의 노출 페이지 식별자 입니다.
+        title:
+          type: string
+          description: 서약·동의 제목 입니다.
+        publishFrom:
+          type: string
+          description: Timezone 정보가 포함된 서약·동의 노출 시작 일시
+          format: date-time
+        publishTo:
+          type: string
+          description: |
+            Timezone 정보가 포함된 서약·동의 노출 종료 일시
+
+            `종료기한없음` 인 경우 null value 입니다.
+        effectiveDate:
+          type: string
+          description: 서약·동의 개정/시행일자
+          format: date
+        bodyRawHtml:
+          type: string
+          description: WYSIWYG 에디터로 작성된 서약·동의 내용에 표시될 HTML 문자열 입니다.
+        consentUserCount:
+          type: integer
+          description: |
+            서약·동의에 동의한 사용자 수
+
+            동의한 사용자 수가 0 보다 크면 (> 0) 서약·동의의 수정 및 삭제를 할 수 없습니다.
+        createdAt:
+          type: string
+          description: Timezone 정보가 포함된 서약·동의 레코드 생성일시
+          format: date-time
+        createdBy:
+          type: string
+          description: 서약·동의 레코드 생성 사용자 식별자
+      required:
+        - id
+        - categoryId
+        - placementId
+        - title
+        - publishFrom
+        - effectiveDate
+        - bodyRawHtml
+        - consentUserCount
+        - createdAt
+        - createdBy
+  securitySchemes:
+    oauth2_client_authentication_key:
+      type: http
+      scheme: basic
+    oauth2_access_token:
+      type: http
+      scheme: bearer
+      description: '`/oauth2/token` 으로 발급받은 Access Token 값'
+    abc_sdk_apikey:
+      name: x-abc-sdk-apikey
+      type: apiKey
+      in: header
+      description: ABC SDK 에서 프로젝트의 앱 기준으로 발급된 API Key 입니다.
+  parameters:
+    x-abc-sdk-apikey:
+      name: x-abc-sdk-apikey
+      in: header
+      required: true
+      schema:
+        type: string
+      description: ABC SDK 에서 발급된 API Key 입니다.
+    x-abc-sdk-proj:
+      name: x-abc-sdk-proj
+      in: header
+      required: true
+      schema:
+        type: string
+        example: 1UcGTCyZ
+      description: 현재 선택되어 있는 SDK Project 식별자
+    x-abc-sdk-acrs:
+      name: x-abc-sdk-acrs
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Authorization Code Request 에서 응답된 `sessionKey` 문자열 값입니다.
+    x-abc-sdk-lang:
+      name: x-abc-sdk-lang
+      in: header
+      required: false
+      schema:
+        type: string
+        enum:
+          - kr
+          - en
+      description: 응답시 참고할 사용자가 선호하는 언어
+    x-abc-sdk-user:
+      name: x-abc-sdk-user
+      in: header
+      required: false
+      schema:
+        type: string
+      description: 앱 또는 서비스에 로그인된 사용자 식별자 입니다. 사용자 식별값이 없는 경우에는 빈 문자열로 설정하면 됩니다.
+  responses:
+    oauth2-error:
+      description: "OAuth2 인증 요청 중 아래와 같이 잘못된 parameter 가 전달된 경우의 오류 응답\n\n* `response_type` 이 허용된 코드가 아닌 경우\n* `client_id` 로 등록된 client 정보를 찾을 수 없는 경우\n* `\bcode_challenge_method` 가 허용된 코드가 (\"S256\") 아닌 경우\n* `session_key` 로 인증 세션 정보를 찾을 수 없는 경우\n* 일치하는 사용자 인증정보를 찾을 수 없는 경우"
+      content:
+        application/json:
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                timestamp: '2023-03-10T04:40:18.465+00:00'
+                status: 400
+                error: Bad Request
+                path: /oauth2/login
+            properties:
+              status:
+                type: integer
+                description: error response code
+              error:
+                type: string
+                description: Error message
+            required:
+              - error
+          examples:
+            /oauth2/authorize:
+              value:
+                status: 400
+                error: '[invalid_request] OAuth 2.0 Parameter: client_id'
+            /oauth2/login - 400:
+              value:
+                status: 400
+                error: Bad Request
+            /oauth2/login - 401:
+              value:
+                status: 401
+                error: Unauthorized
+  requestBodies:
+    popup-item-request:
+      description: 팝업 생성 및 수정시 Request body
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              placementId:
+                type: string
+                description: 노출 페이지 식별자
+              title:
+                type: string
+                description: 팝업 제목 입니다.
+              publishFrom:
+                type: string
+                description: Timezone 정보가 포함된 팝업 노출 시작 일시
+                format: date-time
+              publishTo:
+                type: string
+                description: |
+                  Timezone 정보가 포함된 팝업 노출 종료 일시
+
+                  `종료기한없음` 인 경우 null value 로 전달 됩니다.
+              hideDurationDays:
+                type: integer
+                description: |
+                  다시 보지 않기 처리될 일수 입니다.
+
+                  * -1: 한번 노출 후 다시 노출 하지 않음 (다시보지 않기)
+                  * 0: 노출 페이지 접근시 매번 노출 (설정 안 함)
+                  * 1: 노출 페이지 접근시 일 1회 노출 (하루동안 보지 않기)
+                  * 7: 노출 페이지 접근시 7일 간격으로 노출 (일주일동안 보지 않기)
+              bodyRawHtml:
+                type: string
+                description: WYSIWYG 에디터로 작성된 팝업 내용에 표시될 HTML 문자열 입니다.
+              actionType:
+                $ref: '#/components/schemas/popup-action-type'
+              actionLinkUri:
+                type: string
+                description: '버튼 유형이 `투 버튼` 일 경우, 링크 URL 문자열 입니다.'
+            required:
+              - placementId
+              - publishFrom
+              - hideDurationDays
+              - title
+              - bodyRawHtml
+              - actionType
+    consent-terms-item-request:
+      description: 서약·동의 생성 및 수정시 Request body
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              categoryId:
+                type: string
+                description: 서약·동의 유형 식별자
+              placementId:
+                type: string
+                description: 서약·동의 노출 페이지 식별자
+              title:
+                type: string
+                description: 서약·동의 제목
+              publishFrom:
+                type: string
+                description: Timezone 정보가 포함된 서약·동의 노출 시작 일시
+                format: date-time
+              publishTo:
+                type: string
+                description: |
+                  Timezone 정보가 포함된 서약·동의 노출 종료 일시
+
+                  `종료기한없음` 인 경우 null value 로 전달 됩니다.
+              effectiveDate:
+                type: string
+                description: 서약·동의 개정/시행일자
+                format: date
+              bodyRawHtml:
+                type: string
+                description: WYSIWYG 에디터로 작성된 팝업 내용에 표시될 HTML 문자열 입니다.
+            required:
+              - categoryId
+              - placementId
+              - title
+              - publishFrom
+              - effectiveDate
+              - bodyRawHtml
+tags:
+  - name: oauth2
+    description: OAuth2 와 연관되어 있는 API Endpoint
+  - name: graphql
+    description: GraphQL API Endpoint
+  - name: users
+    description: 사용자 정보 조회 API Endpoint
+  - name: acl
+    description: Access Control List 위한 API Endpoint
+  - name: appstore-app
+    description: 앱스토어 앱을 위한 API Endpoint
+  - name: popup
+    description: Popup API Endpoint
+  - name: consent
+    description: Consent API Endpoint
+  - name: abc-ct-app-admin
+    description: ABC CT App Admin 을 위한 API Endpoint
+  - name: abc-ct-app
+    description: ABC CT App 을 위한 API Endpoint
