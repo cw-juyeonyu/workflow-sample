@@ -30,7 +30,7 @@ jobs:
         run: |
           echo "Container Tag: $CONTAINER_TAG"
           echo "Environment: ${ENVIRONMENT,,}"
-          echo "RefBranch: ${REF_BRANCH/\/-}"
+          echo "RefBranch: ${REF_BRANCH/\//-}"
 
       - name: Dump GitHub context
         id: github_context_step
