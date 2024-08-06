@@ -1,0 +1,28 @@
+name: workflow dispatch sample
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy Environment'
+        required: true
+        default: 'STG'
+        type: choice
+        options:
+        - STG
+        - PRD
+      branch:
+        description: 'Deploy target branch or tag'
+        required: false
+
+jobs:
+  log-the-inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          BRANCH: ${{ inputs.branch }}
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          echo "Branch: $BRANCH"
+          echo "Environment: $ENVIRONMENT"
+        
