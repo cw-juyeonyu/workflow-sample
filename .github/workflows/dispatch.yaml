@@ -25,8 +25,10 @@ jobs:
 
       - env:
           CONTAINER_TAG: ${{ steps.generate_container_env.outputs.container_tag }}
+          ENVIRONMENT: ${{ inputs.environment }}
         run: |
           echo "Container Tag: $CONTAINER_TAG"
+          echo "Environment: ${'${{ inputs.environment}}',,}"
 
       - name: Dump GitHub context
         id: github_context_step
