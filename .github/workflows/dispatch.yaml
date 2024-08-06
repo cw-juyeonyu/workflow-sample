@@ -28,7 +28,7 @@ jobs:
           ENVIRONMENT: ${{ inputs.environment }}
         run: |
           echo "Container Tag: $CONTAINER_TAG"
-          echo "Environment: ${'${{ inputs.environment}}',,}"
+          echo "Environment: ${ENVIRONMENT,,}"
 
       - name: Dump GitHub context
         id: github_context_step
