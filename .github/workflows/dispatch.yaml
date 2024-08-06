@@ -20,6 +20,7 @@ jobs:
           ENVIRONMENT: ${{ inputs.environment }}
         run: |
           echo "Environment: $ENVIRONMENT"
+          echo "container_tag=${{ github.ref_name }}-$(date '+%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
 
       - name: Dump GitHub context
         id: github_context_step
