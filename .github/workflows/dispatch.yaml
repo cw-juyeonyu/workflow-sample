@@ -26,9 +26,11 @@ jobs:
       - env:
           CONTAINER_TAG: ${{ steps.generate_container_env.outputs.container_tag }}
           ENVIRONMENT: ${{ inputs.environment }}
+          REF_BRANCH: feat/test
         run: |
           echo "Container Tag: $CONTAINER_TAG"
           echo "Environment: ${ENVIRONMENT,,}"
+          echo "RefBranch: $REF_BRANCH"
 
       - name: Dump GitHub context
         id: github_context_step
