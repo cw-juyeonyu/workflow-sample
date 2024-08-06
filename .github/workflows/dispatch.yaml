@@ -18,10 +18,15 @@ jobs:
     steps:
       - env:
           ENVIRONMENT: ${{ inputs.environment }}
+        id: generate_container_env
         run: |
           echo "Environment: $ENVIRONMENT"
           echo "container_tag=${{ github.ref_name }}-$(date '+%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
-          echo "container_tag: $container_tag"
+
+      - env:
+          CONTAINER_TAG: ${{ steps.generate_container_env.outputs.container_tag }}
+        run: |
+          echo "Container Tag: $CONTAINER_TAG"
 
       - name: Dump GitHub context
         id: github_context_step
