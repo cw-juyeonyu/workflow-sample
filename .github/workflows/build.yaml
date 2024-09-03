@@ -34,5 +34,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `The api specs address for pull request ${{ context.issue.number }} is ${{ steps.upload_api_specs_artifact.outputs.artifact-url }}. :newspaper_roll:`
+              body: `The api specs address for pull request ${{ context.issue.number }} is . :newspaper_roll:`
             })
