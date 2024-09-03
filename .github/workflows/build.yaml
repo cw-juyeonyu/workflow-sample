@@ -26,13 +26,5 @@ jobs:
           name: hello.pr-${{ github.event.number }}.txt
           path: world.txt
 
-      - name: Create PR Comment
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: github.issue.number,
-              owner: github.repo.owner,
-              repo: github.repo.repo,
-              body: `The api specs address for pull request ${{ github.issue.number }} is . :newspaper_roll:`
-            })
+      - name: Dump GitHub context
+        run: echo '${{ toJSON(context) }}'
