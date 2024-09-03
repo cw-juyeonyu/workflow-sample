@@ -28,8 +28,6 @@ jobs:
 
       - name: Create PR Comment
         uses: actions/github-script@v7
-        env:
-          PR_NO: ${{ context.issue.number }}
         with:
           script: |
             console.log(context)
