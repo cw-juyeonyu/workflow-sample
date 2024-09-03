@@ -38,7 +38,6 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `The api specs address for pull request ${context.payload.pull_request.number}~~~~
-              ${{ steps.upload_api_specs_artifact.outputs.artifact-url }} :newspaper_roll:`
+              body: `Generated openapi.json can download from [Pull request ${context.payload.pull_request.number} api docs](${{ steps.upload_api_specs_artifact.outputs.artifact-url }}). 🗞️`
             })
             
