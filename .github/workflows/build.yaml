@@ -32,9 +32,5 @@ jobs:
           PR_NO: ${{ context.issue.number }}
         with:
           script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `The api specs address for pull request ${process.env.PR_NO}~~~~✨`
-            })
+            console.log(context)
+            
