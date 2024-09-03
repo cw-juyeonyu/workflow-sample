@@ -39,6 +39,6 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `The api specs address for pull request ${context.payload.pull_request.number}~~~~
-              ${{env.URL}}:newspaper_roll:`
+              ${{ steps.upload_api_specs_artifact.outputs.artifact-url }} :newspaper_roll:`
             })
             
