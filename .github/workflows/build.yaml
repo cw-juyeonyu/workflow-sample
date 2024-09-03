@@ -36,5 +36,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `The api specs address for pull request ${PR_NO}~~~~✨`
+              body: `The api specs address for pull request ${process.env.PR_NO}~~~~✨`
             })
