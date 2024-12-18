@@ -18,4 +18,4 @@ jobs:
       run: 'gcloud info'
 
     - name: 'Run gcloud Command'
-      run: 'gcloud ssh abc-imgai-test --zonbe=us-west1-a --command="echo Hello world"'
+      run: 'gcloud compute ssh abc-imgai-test --zonbe=us-west1-a --command="echo Hello world"'
