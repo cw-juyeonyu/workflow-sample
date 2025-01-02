@@ -16,6 +16,9 @@ jobs:
   log-the-inputs:
     runs-on: ubuntu-latest
     steps:
+      - run: |
+          docker --version
+          
       - env:
           ENVIRONMENT: ${{ inputs.environment }}
         id: generate_container_env
