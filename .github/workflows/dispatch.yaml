@@ -20,9 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: generate_container_env_test
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          INPUT_TAG = "${{ inputs.tag }}"
-
           if [ -z "$INPUT_TAG" ]
           then
             echo "container_tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
