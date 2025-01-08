@@ -25,7 +25,7 @@ jobs:
         run: |
           if [ -z "$INPUT_TAG" ]
           then
-            echo "container_tag=${{ github.event.ref }}-$(date '+%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
+            echo "container_tag=${{ github.event.ref_name }}-$(date '+%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
           else
             echo "container_tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
           fi
