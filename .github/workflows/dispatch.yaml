@@ -19,7 +19,7 @@ jobs:
   log-the-inputs:
     runs-on: ubuntu-latest
     steps:
-      - id: generate_container_env
+      - id: generate_container_env_test
         run: |
           INPUT_TAG = "${{ inputs.tag }}"
 
@@ -31,7 +31,7 @@ jobs:
           fi
 
       - run: |
-          echo ${{ steps.generate_container_env.outputs.container_tag }}
+          echo ${{ steps.generate_container_env_test.outputs.container_tag }}
         
       - run: |
           docker --version
