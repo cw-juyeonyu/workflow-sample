@@ -11,11 +11,28 @@ on:
         options:
         - STG
         - PRD
+      tag:
+        description: 'Deploy tag (ex. 2025.01.001)'
+        required: false
 
 jobs:
   log-the-inputs:
     runs-on: ubuntu-latest
     steps:
+      - id: generate_container_env
+        run: |
+          INPUT_TAG = "${{ inputs.tag }}"
+
+          if [ -z "$INPUT_TAG" ]
+          then
+            echo "container_tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "container_tag=${{ github.event.ref }}-$(date '+%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: |
+          echo ${{ steps.generate_container_env.outputs.container_tag }}
+        
       - run: |
           docker --version
           
