@@ -15,6 +15,10 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.release.tag_name }}
 
+      - name: Dump GitHub context
+        id: github_context_step
+        run: echo '${{ toJSON(github) }}'
+
       - name: Generate Container Tag
         run: |
           COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)
